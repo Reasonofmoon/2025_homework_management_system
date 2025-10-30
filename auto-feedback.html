@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 학부모 자동 피드백 시스템</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #f5222d;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .config-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .config-section h2 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #389e0d;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .student-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .student-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .student-checkbox:hover {
+            background: #e6f7ff;
+            border-color: #1890ff;
+        }
+
+        .student-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--success-color);
+        }
+
+        .feedback-preview {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+
+        .feedback-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feedback-item h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .feedback-content {
+            white-space: pre-wrap;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: var(--success-color);
+        }
+
+        .notification.error {
+            background: var(--error-color);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .api-provider {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .api-provider label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 학부모 자동 피드백 시스템</h1>
+            <p>AI를 활용한 개인화된 학부모 피드백 자동 생성</p>
+        </div>
+
+        <!-- API 설정 섹션 -->
+        <div class="config-section">
+            <h2>🔧 API 설정</h2>
+            
+            <div class="form-group">
+                <label>API 제공자 선택</label>
+                <div class="api-provider">
+                    <label>
+                        <input type="radio" name="api-provider" value="openai" checked>
+                        OpenAI (GPT-4, GPT-3.5)
+                    </label>
+                    <label>
+                        <input type="radio" name="api-provider" value="anthropic">
+                        Anthropic (Claude)
+                    </label>
+                    <label>
+                        <input type="radio" name="api-provider" value="google">
+                        Google (Gemini)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="api-key">API Key</label>
+                <input type="password" id="api-key" placeholder="API 키를 입력하세요">
+                <div class="hint">💡 API 키는 브라우저에만 저장되며 외부로 전송되지 않습니다</div>
+            </div>
+
+            <div class="form-group">
+                <label for="api-model">모델 선택</label>
+                <select id="api-model">
+                    <option value="gpt-4o">GPT-4o (추천)</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (빠르고 저렴)</option>
+                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-success" onclick="saveAPIConfig()">💾 설정 저장</button>
+                <button class="btn btn-warning" onclick="testAPI()">🧪 API 테스트</button>
+            </div>
+        </div>
+
+        <!-- 피드백 템플릿 섹션 -->
+        <div class="config-section">
+            <h2>📝 피드백 템플릿 설정</h2>
+            
+            <div class="form-group">
+                <label for="feedback-tone">피드백 톤 선택</label>
+                <select id="feedback-tone">
+                    <option value="encouraging">격려하는 (긍정적, 따뜻함)</option>
+                    <option value="professional">전문적인 (객관적, 명확함)</option>
+                    <option value="detailed">상세한 (구체적, 분석적)</option>
+                    <option value="concise">간결한 (핵심만, 요약)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="custom-prompt">커스텀 프롬프트 (선택사항)</label>
+                <textarea id="custom-prompt" placeholder="추가적인 피드백 지침을 입력하세요. 예: '수학 성적에 특별히 집중해주세요', '학생의 강점을 먼저 언급해주세요' 등"></textarea>
+            </div>
+        </div>
+
+        <!-- 학생 선택 섹션 -->
+        <div class="config-section">
+            <h2>👥 피드백 생성 대상 학생 선택</h2>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="selectAllStudents()">✅ 전체 선택</button>
+                <button class="btn btn-danger" onclick="deselectAllStudents()">❌ 전체 해제</button>
+            </div>
+
+            <div class="student-selection" id="student-selection">
+                <!-- 학생 목록이 여기에 동적으로 생성됩니다 -->
+            </div>
+        </div>
+
+        <!-- 피드백 생성 버튼 -->
+        <div class="config-section">
+            <button class="btn btn-primary" onclick="generateFeedback()" style="width: 100%; font-size: 1.2rem; padding: 15px;">
+                🚀 AI 피드백 생성하기
+            </button>
+        </div>
+
+        <!-- 로딩 표시 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>AI가 피드백을 생성하고 있습니다...</p>
+        </div>
+
+        <!-- 피드백 미리보기 -->
+        <div class="feedback-preview" id="feedback-preview" style="display: none;">
+            <h2>📋 생성된 피드백</h2>
+            <div id="feedback-results"></div>
+            
+            <div class="button-group">
+                <button class="btn btn-success" onclick="saveAllFeedback()">💾 모든 피드백 저장</button>
+                <button class="btn btn-primary" onclick="copyAllFeedback()">📋 전체 복사</button>
+                <button class="btn btn-warning" onclick="exportFeedback()">📤 내보내기 (JSON)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // 학생 데이터 (기존 시스템에서 가져옴)
+        let studentsData = [
+            { id: 1, class: "Halfmoon A", name: "전주형", school: "안일초", grade: "초4" },
+            { id: 2, class: "Halfmoon A", name: "김시은", school: "샘모루초", grade: "초4" },
+            { id: 3, class: "Halfmoon A", name: "김지우", school: "안양동초", grade: "초3" },
+            { id: 4, class: "Halfmoon A", name: "이도후", school: "샘모루초", grade: "초4" },
+            { id: 5, class: "NewMoon A", name: "문모아", school: "", grade: "초1" },
+            { id: 6, class: "NewMoon A", name: "이하람", school: "", grade: "초3" },
+            { id: 7, class: "NewMoon A", name: "황지욱", school: "", grade: "초2" },
+            { id: 8, class: "NewMoon C", name: "김리안", school: "중앙초", grade: "초2" },
+            { id: 9, class: "NewMoon C", name: "어준혁", school: "", grade: "초2" },
+            { id: 10, class: "NewMoon C", name: "양지후", school: "중앙초", grade: "초2" },
+            { id: 11, class: "NewMoon C", name: "이지한", school: "샘모루초", grade: "초3" },
+            { id: 12, class: "NewMoon C", name: "이지훈", school: "샘모루초", grade: "초3" },
+            { id: 13, class: "NewMoon C", name: "정채린", school: "중앙초", grade: "초2" },
+            { id: 14, class: "가니메데", name: "김시연", school: "임곡중", grade: "중3" },
+            { id: 16, class: "가니메데", name: "신민경", school: "덕천초", grade: "초6" },
+            { id: 17, class: "가니메데", name: "정희준", school: "평촌고", grade: "고1" },
+            { id: 15, class: "유로파 A", name: "김정우", school: "임곱중", grade: "중3" },
+            { id: 19, class: "유로파 A", name: "김예지", school: "안양외고", grade: "고1" },
+            { id: 21, class: "유로파 A", name: "신현호", school: "평촌고", grade: "고1" },
+            { id: 18, class: "유로파 B", name: "조유주", school: "임곱중", grade: "중1" },
+            { id: 20, class: "유로파 B", name: "김한울", school: "임곱중", grade: "중3" },
+            { id: 22, class: "유로파 B", name: "정지연", school: "임곱중", grade: "중3" },
+            { id: 24, class: "유로파 B", name: "조유이", school: "문화여고", grade: "고2" },
+            { id: 25, class: "칼리스토 A", name: "김석준", school: "안양동초", grade: "초6" },
+            { id: 26, class: "칼리스토 A", name: "김승준", school: "안양동초", grade: "초6" },
+            { id: 27, class: "칼리스토 A", name: "김온유", school: "중앙초", grade: "초6" },
+            { id: 28, class: "칼리스토 A", name: "신아민", school: "안양동초", grade: "초6" },
+            { id: 29, class: "칼리스토 A", name: "오예원", school: "중앙초", grade: "초6" },
+            { id: 30, class: "칼리스토 A", name: "홍주연", school: "샘모루초", grade: "초5" }
+        ];
+
+        let apiConfig = {
+            provider: 'openai',
+            apiKey: '',
+            model: 'gpt-4o'
+        };
+
+        let generatedFeedback = {};
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAPIConfig();
+            renderStudentSelection();
+            updateModelOptions();
+
+            // API 제공자 변경 시 모델 옵션 업데이트
+            document.querySelectorAll('input[name="api-provider"]').forEach(radio => {
+                radio.addEventListener('change', updateModelOptions);
+            });
+        });
+
+        function updateModelOptions() {
+            const provider = document.querySelector('input[name="api-provider"]:checked').value;
+            const modelSelect = document.getElementById('api-model');
+            
+            modelSelect.innerHTML = '';
+            
+            if (provider === 'openai') {
+                modelSelect.innerHTML = `
+                    <option value="gpt-4o">GPT-4o (추천)</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (빠르고 저렴)</option>
+                `;
+            } else if (provider === 'anthropic') {
+                modelSelect.innerHTML = `
+                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (추천)</option>
+                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                    <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                `;
+            } else if (provider === 'google') {
+                modelSelect.innerHTML = `
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (추천)</option>
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                `;
+            }
+        }
+
+        function renderStudentSelection() {
+            const container = document.getElementById('student-selection');
+            container.innerHTML = '';
+
+            studentsData.forEach(student => {
+                const checkbox = document.createElement('div');
+                checkbox.className = 'student-checkbox';
+                checkbox.innerHTML = `
+                    <input type="checkbox" id="student-${student.id}" value="${student.id}">
+                    <label for="student-${student.id}">
+                        ${student.name} (${student.class})
+                    </label>
+                `;
+                container.appendChild(checkbox);
+            });
+        }
+
+        function selectAllStudents() {
+            document.querySelectorAll('.student-checkbox input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+
+        function deselectAllStudents() {
+            document.querySelectorAll('.student-checkbox input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+
+        function saveAPIConfig() {
+            const provider = document.querySelector('input[name="api-provider"]:checked').value;
+            const apiKey = document.getElementById('api-key').value;
+            const model = document.getElementById('api-model').value;
+
+            if (!apiKey) {
+                showNotification('API 키를 입력해주세요', 'error');
+                return;
+            }
+
+            apiConfig = { provider, apiKey, model };
+            localStorage.setItem('apiConfig', JSON.stringify(apiConfig));
+            showNotification('API 설정이 저장되었습니다', 'success');
+        }
+
+        function loadAPIConfig() {
+            const saved = localStorage.getItem('apiConfig');
+            if (saved) {
+                apiConfig = JSON.parse(saved);
+                document.querySelector(`input[name="api-provider"][value="${apiConfig.provider}"]`).checked = true;
+                document.getElementById('api-key').value = apiConfig.apiKey;
+                updateModelOptions();
+                document.getElementById('api-model').value = apiConfig.model;
+            }
+        }
+
+        async function testAPI() {
+            if (!apiConfig.apiKey) {
+                showNotification('먼저 API 설정을 저장해주세요', 'error');
+                return;
+            }
+
+            try {
+                const loading = document.getElementById('loading');
+                loading.classList.add('active');
+
+                const testMessage = "안녕하세요. API 테스트입니다.";
+                const response = await callLLMAPI(testMessage);
+                
+                loading.classList.remove('active');
+                showNotification('API 연결 성공! ' + response.substring(0, 50) + '...', 'success');
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                showNotification('API 테스트 실패: ' + error.message, 'error');
+            }
+        }
+
+        async function generateFeedback() {
+            const selectedStudents = Array.from(document.querySelectorAll('.student-checkbox input[type="checkbox"]:checked'))
+                .map(cb => parseInt(cb.value));
+
+            if (selectedStudents.length === 0) {
+                showNotification('최소 1명의 학생을 선택해주세요', 'error');
+                return;
+            }
+
+            if (!apiConfig.apiKey) {
+                showNotification('먼저 API 설정을 저장해주세요', 'error');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const previewSection = document.getElementById('feedback-preview');
+            const resultsContainer = document.getElementById('feedback-results');
+
+            loading.classList.add('active');
+            resultsContainer.innerHTML = '';
+            generatedFeedback = {};
+
+            const tone = document.getElementById('feedback-tone').value;
+            const customPrompt = document.getElementById('custom-prompt').value;
+
+            for (const studentId of selectedStudents) {
+                const student = studentsData.find(s => s.id === studentId);
+                const homework = getHomeworkForStudent(studentId);
+
+                try {
+                    const feedback = await generateStudentFeedback(student, homework, tone, customPrompt);
+                    generatedFeedback[studentId] = feedback;
+
+                    const feedbackItem = document.createElement('div');
+                    feedbackItem.className = 'feedback-item';
+                    feedbackItem.innerHTML = `
+                        <h3>👤 ${student.name} (${student.school} ${student.grade})</h3>
+                        <div class="feedback-content">${feedback}</div>
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="saveSingleFeedback(${studentId})">💾 저장</button>
+                            <button class="btn btn-primary" onclick="copySingleFeedback(${studentId})">📋 복사</button>
+                            <button class="btn btn-warning" onclick="regenerateFeedback(${studentId})">🔄 재생성</button>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(feedbackItem);
+                } catch (error) {
+                    console.error('피드백 생성 실패:', error);
+                    const errorItem = document.createElement('div');
+                    errorItem.className = 'feedback-item';
+                    errorItem.style.borderColor = 'var(--error-color)';
+                    errorItem.innerHTML = `
+                        <h3>❌ ${student.name} - 생성 실패</h3>
+                        <div class="feedback-content">오류: ${error.message}</div>
+                    `;
+                    resultsContainer.appendChild(errorItem);
+                }
+            }
+
+            loading.classList.remove('active');
+            previewSection.style.display = 'block';
+            showNotification('피드백 생성이 완료되었습니다!', 'success');
+        }
+
+        async function generateStudentFeedback(student, homework, tone, customPrompt) {
+            const toneDescriptions = {
+                encouraging: '따뜻하고 격려하는 톤으로, 학생의 성장과 발전에 초점',
+                professional: '전문적이고 객관적인 톤으로, 명확한 평가와 개선 방향 제시',
+                detailed: '상세하고 분석적인 톤으로, 구체적인 예시와 함께 심층적인 피드백',
+                concise: '간결하고 핵심적인 톤으로, 중요한 포인트만 요약'
+            };
+
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const isSpecialClass = specialClasses.includes(student.class);
+
+            let prompt = `당신은 영어 교육 전문가이자 학부모 상담 전문가입니다. 다음 학생의 학습 현황을 바탕으로 학부모님께 전달할 피드백을 작성해주세요.
+
+학생 정보:
+- 이름: ${student.name}
+- 학교: ${student.school}
+- 학년: ${student.grade}
+- 반: ${student.class}
+
+학습 현황:`;
+
+            if (isSpecialClass) {
+                prompt += `
+- 어휘시험: ${homework.vocabularyTest || '없음'}
+- 어휘합격 여부: ${homework.vocabularyPass ? '합격' : '불합격'}
+- 소리훈련: ${homework.phonics || '없음'}
+- 소리훈련 합격 여부: ${homework.phonicsPass ? '합격' : '불합격'}
+- 원서수업: ${homework.reading || '없음'}
+- 문법 숙제: ${homework.grammar || '없음'}
+- 문법숙제 완료 여부: ${homework.grammarComplete ? '완료' : '미완료'}
+- 퀴즐릿 합격 여부: ${homework.quizletPass ? '합격' : '불합격'}`;
+            } else {
+                prompt += `
+- 어휘 (입체어휘 4000): ${homework.vocabulary || '없음'}
+- 어휘 합격 여부: ${homework.vocabularyPass ? '합격' : '불합격'}
+- 소리훈련: ${homework.phonics || '없음'}
+- 소리훈련 합격 여부: ${homework.phonicsPass ? '합격' : '불합격'}
+- 독서: ${homework.reading || '없음'}
+- 퀴즐릿 학습: ${homework.quizletEnabled ? '활성화' : '비활성화'}
+- 퀴즐릿 합격 여부: ${homework.quizletPass ? '합격' : '불합격'}
+- 기타: ${homework.other || '없음'}`;
+            }
+
+            if (homework.feedback) {
+                prompt += `\n- 교사 피드백: ${homework.feedback}`;
+            }
+
+            prompt += `\n\n피드백 작성 가이드:
+- 톤: ${toneDescriptions[tone]}
+- 학부모님이 이해하기 쉽게 작성
+- 학생의 강점과 개선이 필요한 부분을 균형있게 언급
+- 구체적인 학습 조언 포함
+- 200-300자 정도의 적절한 길이
+${customPrompt ? '\n- 추가 요청사항: ' + customPrompt : ''}
+
+한국어로 학부모님께 전달할 피드백을 작성해주세요:`;
+
+            return await callLLMAPI(prompt);
+        }
+
+        async function callLLMAPI(message) {
+            if (apiConfig.provider === 'openai') {
+                return await callOpenAI(message);
+            } else if (apiConfig.provider === 'anthropic') {
+                return await callAnthropic(message);
+            } else if (apiConfig.provider === 'google') {
+                return await callGoogle(message);
+            }
+        }
+
+        async function callOpenAI(message) {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiConfig.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: apiConfig.model,
+                    messages: [{ role: 'user', content: message }],
+                    temperature: 0.7,
+                    max_tokens: 1000
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'API 요청 실패');
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        async function callAnthropic(message) {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiConfig.apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: apiConfig.model,
+                    max_tokens: 1000,
+                    messages: [{ role: 'user', content: message }]
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'API 요청 실패');
+            }
+
+            const data = await response.json();
+            return data.content[0].text;
+        }
+
+        async function callGoogle(message) {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiConfig.model}:generateContent?key=${apiConfig.apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: message }]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'API 요청 실패');
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        function getHomeworkForStudent(studentId) {
+            // 기존 시스템의 localStorage에서 숙제 데이터 가져오기
+            const homeworkData = JSON.parse(localStorage.getItem('homeworkData') || '{}');
+            const currentDate = new Date().toISOString().split('T')[0];
+            
+            return homeworkData[currentDate]?.[studentId] || {
+                vocabulary: '',
+                vocabularyTest: '',
+                phonics: '',
+                reading: '',
+                grammar: '',
+                quizletEnabled: false,
+                other: '',
+                vocabularyPass: false,
+                phonicsPass: false,
+                grammarComplete: false,
+                quizletPass: false,
+                feedback: ''
+            };
+        }
+
+        async function regenerateFeedback(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const homework = getHomeworkForStudent(studentId);
+            const tone = document.getElementById('feedback-tone').value;
+            const customPrompt = document.getElementById('custom-prompt').value;
+
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            try {
+                const feedback = await generateStudentFeedback(student, homework, tone, customPrompt);
+                generatedFeedback[studentId] = feedback;
+                
+                // UI 업데이트
+                const feedbackItem = document.querySelector(`.feedback-item:has(h3:contains("${student.name}"))`);
+                if (feedbackItem) {
+                    feedbackItem.querySelector('.feedback-content').textContent = feedback;
+                }
+                
+                showNotification('피드백이 재생성되었습니다', 'success');
+            } catch (error) {
+                showNotification('피드백 재생성 실패: ' + error.message, 'error');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        function saveSingleFeedback(studentId) {
+            const feedback = generatedFeedback[studentId];
+            if (!feedback) return;
+
+            // 기존 시스템에 피드백 저장
+            const homeworkData = JSON.parse(localStorage.getItem('homeworkData') || '{}');
+            const currentDate = new Date().toISOString().split('T')[0];
+            
+            if (!homeworkData[currentDate]) {
+                homeworkData[currentDate] = {};
+            }
+            if (!homeworkData[currentDate][studentId]) {
+                homeworkData[currentDate][studentId] = {};
+            }
+            
+            homeworkData[currentDate][studentId].feedback = feedback;
+            localStorage.setItem('homeworkData', JSON.stringify(homeworkData));
+            
+            showNotification('피드백이 저장되었습니다', 'success');
+        }
+
+        function copySingleFeedback(studentId) {
+            const feedback = generatedFeedback[studentId];
+            if (!feedback) return;
+
+            const student = studentsData.find(s => s.id === studentId);
+            const textToCopy = `[${student.name} 학생 피드백]\n\n${feedback}`;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showNotification('피드백이 복사되었습니다', 'success');
+            }).catch(() => {
+                showNotification('복사 실패', 'error');
+            });
+        }
+
+        function saveAllFeedback() {
+            const homeworkData = JSON.parse(localStorage.getItem('homeworkData') || '{}');
+            const currentDate = new Date().toISOString().split('T')[0];
+            
+            if (!homeworkData[currentDate]) {
+                homeworkData[currentDate] = {};
+            }
+
+            Object.keys(generatedFeedback).forEach(studentId => {
+                if (!homeworkData[currentDate][studentId]) {
+                    homeworkData[currentDate][studentId] = {};
+                }
+                homeworkData[currentDate][studentId].feedback = generatedFeedback[studentId];
+            });
+
+            localStorage.setItem('homeworkData', JSON.stringify(homeworkData));
+            showNotification('모든 피드백이 저장되었습니다', 'success');
+        }
+
+        function copyAllFeedback() {
+            let allText = '=== 학생 피드백 모음 ===\n\n';
+            
+            Object.keys(generatedFeedback).forEach(studentId => {
+                const student = studentsData.find(s => s.id === parseInt(studentId));
+                allText += `[${student.name} - ${student.school} ${student.grade}]\n`;
+                allText += `${generatedFeedback[studentId]}\n\n`;
+                allText += '─'.repeat(50) + '\n\n';
+            });
+
+            navigator.clipboard.writeText(allText).then(() => {
+                showNotification('전체 피드백이 복사되었습니다', 'success');
+            }).catch(() => {
+                showNotification('복사 실패', 'error');
+            });
+        }
+
+        function exportFeedback() {
+            const exportData = Object.keys(generatedFeedback).map(studentId => {
+                const student = studentsData.find(s => s.id === parseInt(studentId));
+                return {
+                    studentId: parseInt(studentId),
+                    name: student.name,
+                    class: student.class,
+                    school: student.school,
+                    grade: student.grade,
+                    feedback: generatedFeedback[studentId],
+                    generatedAt: new Date().toISOString()
+                };
+            });
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `feedback_export_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showNotification('피드백이 내보내기되었습니다', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

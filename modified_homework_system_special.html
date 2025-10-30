@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 학생 숙제 관리 시스템</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 학생 숙제 관리 시스템</h1>
+            <p>입체어휘 4000 & 소리훈련 체계적 관리 시스템</p>
+        </div>
+
+        <div class="controls">
+            <div class="date-selector">
+                <label for="homework-date">📅 숙제 날짜:</label>
+                <input type="date" id="homework-date" value="">
+            </div>
+
+            <div class="class-filter">
+                <label for="class-filter">🎓 반 필터:</label>
+                <select id="class-filter">
+                    <option value="all">전체 반</option>
+                </select>
+            </div>
+
+            <button class="export-btn" onclick="exportHomework()">
+                📊 CSV 내보내기
+            </button>
+            
+            <button class="export-btn" onclick="exportClassHomework()" style="background: var(--success-color);">
+                📋 반별 숙제 복사
+            </button>
+            
+            <button class="export-btn" onclick="showSystemGuide()" style="background: var(--warning-color);">
+                📚 사용 가이드
+            </button>
+            
+            <button class="export-btn" onclick="backupData()" style="background: #13c2c2;">
+                💾 데이터 백업
+            </button>
+            
+            <button class="export-btn" onclick="document.getElementById('restore-file').click()" style="background: #722ed1;">
+                📥 데이터 복구
+            </button>
+            <input type="file" id="restore-file" accept=".json" style="display: none;" onchange="restoreData(event)">
+            
+            <button class="export-btn" onclick="showStudentManagement()" style="background: #eb2f96;">
+                👥 학생 관리
+            </button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="total-students">0</div>
+                <div class="stat-label">총 학생 수</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completed-homework">0</div>
+                <div class="stat-label">완료된 숙제</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completion-rate">0%</div>
+                <div class="stat-label">완료율</div>
+            </div>
+        </div>
+
+        <div class="bulk-actions">
+            <h3>📋 일괄 작업</h3>
+            <div class="bulk-controls">
+                <select id="bulk-class" class="bulk-select">
+                    <option value="">반 선택</option>
+                </select>
+                <select id="bulk-category" class="bulk-select">
+                    <option value="">카테고리 선택</option>
+                    <option value="vocabulary">어휘</option>
+                    <option value="phonics">소리</option>
+                    <option value="reading">독서</option>
+                    <option value="quizletEnabled">퀴즐릿 활성화</option>
+                </select>
+                <select id="bulk-homework" class="bulk-select">
+                    <option value="">숙제 선택</option>
+                </select>
+                <button class="bulk-btn" onclick="applyBulkHomework()">
+                    🚀 일괄 적용
+                </button>
+                <button class="bulk-btn" onclick="copyBulkHomework()" style="background: #1890ff;">
+                    📋 반별 숙제 복사
+                </button>
+            </div>
+        </div>
+
+        <div id="classes-container">
+            <!-- 반별 학생 목록이 여기에 동적으로 생성됩니다 -->
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <!-- JavaScript 모듈 로드 -->
+    <script src="js/data-manager.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script src="js/feedback-manager.js"></script>
+    <script src="js/utilities.js"></script>
+
+    <script>
+        // 호환성을 위한 브리지 함수들
+        function updateHomework(studentId, category, value) {
+            dataManager.updateHomework(studentId, category, value);
+        }
+    </script>
+
+    <!-- 캐시 무효화 (개발용) -->
+    <!-- Cache-busting: 2025-01-22-05:29 - 모듈화 완료
+        let studentsData = [
+            { id: 1, class: "Halfmoon A", name: "전주형", school: "안일초", grade: "초4" },
+            { id: 2, class: "Halfmoon A", name: "김시은", school: "샘모루초", grade: "초4" },
+            { id: 3, class: "Halfmoon A", name: "김지우", school: "안양동초", grade: "초3" },
+            { id: 4, class: "Halfmoon A", name: "이도후", school: "샘모루초", grade: "초4" },
+            { id: 5, class: "NewMoon A", name: "문모아", school: "", grade: "초1" },
+            { id: 6, class: "NewMoon A", name: "이하람", school: "", grade: "초3" },
+            { id: 7, class: "NewMoon A", name: "황지욱", school: "", grade: "초2" },
+            { id: 8, class: "NewMoon C", name: "김리안", school: "중앙초", grade: "초2" },
+            { id: 9, class: "NewMoon C", name: "어준혁", school: "", grade: "초2" },
+            { id: 10, class: "NewMoon C", name: "양지후", school: "중앙초", grade: "초2" },
+            { id: 11, class: "NewMoon C", name: "이지한", school: "샘모루초", grade: "초3" },
+            { id: 12, class: "NewMoon C", name: "이지훈", school: "샘모루초", grade: "초3" },
+            { id: 13, class: "NewMoon C", name: "정채린", school: "중앙초", grade: "초2" },
+            { id: 14, class: "가니메데", name: "김시연", school: "임곡중", grade: "중3" },
+            { id: 16, class: "가니메데", name: "신민경", school: "덕천초", grade: "초6" },
+            { id: 17, class: "가니메데", name: "정희준", school: "평촌고", grade: "고1" },
+            { id: 15, class: "유로파 A", name: "김정우", school: "임곱중", grade: "중3" },
+            { id: 19, class: "유로파 A", name: "김예지", school: "안양외고", grade: "고1" },
+            { id: 21, class: "유로파 A", name: "신현호", school: "평촌고", grade: "고1" },
+            { id: 18, class: "유로파 B", name: "조유주", school: "임곱중", grade: "중1" },
+            { id: 20, class: "유로파 B", name: "김한울", school: "임곱중", grade: "중3" },
+            { id: 22, class: "유로파 B", name: "정지연", school: "임곱중", grade: "중3" },
+            { id: 24, class: "유로파 B", name: "조유이", school: "문화여고", grade: "고2" },
+            { id: 25, class: "칼리스토 A", name: "김석준", school: "안양동초", grade: "초6" },
+            { id: 26, class: "칼리스토 A", name: "김승준", school: "안양동초", grade: "초6" },
+            { id: 27, class: "칼리스토 A", name: "김온유", school: "중앙초", grade: "초6" },
+            { id: 28, class: "칼리스토 A", name: "신아민", school: "안양동초", grade: "초6" },
+            { id: 29, class: "칼리스토 A", name: "오예원", school: "중앙초", grade: "초6" },
+            { id: 30, class: "칼리스토 A", name: "홍주연", school: "샘모루초", grade: "초5" },
+            { id: 31, class: "칼리스토 B", name: "강현서", school: "샘모루초", grade: "초5" },
+            { id: 32, class: "칼리스토 B", name: "김예건", school: "샘모루초", grade: "초5" },
+            { id: 33, class: "칼리스토 B", name: "김은총", school: "중앙초", grade: "초6" },
+            { id: 34, class: "칼리스토 B", name: "서보민", school: "샘모루초", grade: "초5" },
+            { id: 35, class: "칼리스토 B", name: "신백경", school: "덕천초", grade: "초3" },
+            { id: 37, class: "칼리스토 B", name: "정세진", school: "샘모루초", grade: "초5" },
+            { id: 69, class: "칼리스토 B", name: "최서준", school: "", grade: "" },
+            { id: 38, class: "칼리스토 C", name: "구도윤", school: "샘모루초", grade: "초5" },
+            { id: 39, class: "칼리스토 C", name: "신시현", school: "안양동초", grade: "초5" },
+            { id: 40, class: "칼리스토 C", name: "조은서", school: "샘모루초", grade: "초4" },
+            { id: 68, class: "칼리스토 C", name: "김수인", school: "", grade: "초5" },
+            { id: 41, class: "크레센트", name: "우도연", school: "덕천초", grade: "초3" },
+            { id: 42, class: "크레센트 A", name: "구하나", school: "", grade: "" },
+            { id: 43, class: "크레센트 A", name: "김시원", school: "비산초", grade: "초1" },
+            { id: 44, class: "크레센트 A", name: "김은유", school: "", grade: "초3" },
+            { id: 45, class: "크레센트 A", name: "백서준", school: "샘모루초", grade: "초4" },
+            { id: 47, class: "크레센트 A", name: "전제이", school: "안양동초", grade: "초3" },
+            { id: 48, class: "크레센트 B", name: "김보겸", school: "중앙초", grade: "초3" },
+            { id: 49, class: "크레센트 B", name: "김지오", school: "샘모루초", grade: "초2" },
+            { id: 50, class: "크레센트 B", name: "문아늘", school: "안양초", grade: "초2" },
+            { id: 51, class: "크레센트 C", name: "김윤아", school: "안양동초", grade: "초4" },
+            { id: 52, class: "크레센트 C", name: "박유주", school: "중앙초", grade: "초2" },
+            { id: 53, class: "크레센트 C", name: "서여율", school: "", grade: "초3" },
+            { id: 54, class: "크레센트 C", name: "신유주", school: "", grade: "초4" },
+            { id: 55, class: "크레센트 C", name: "양승유", school: "샘모루초", grade: "초1" },
+            { id: 56, class: "크레센트 C", name: "이승준", school: "샘모루초", grade: "초2" },
+            { id: 57, class: "크레센트 C", name: "최준명", school: "안양동초", grade: "초4" },
+            { id: 59, class: "타이탄 A", name: "김정민", school: "임곱중", grade: "중1" },
+            { id: 60, class: "타이탄 A", name: "전설우", school: "임곱중", grade: "중1" },
+            { id: 61, class: "타이탄 B", name: "강현우", school: "비산중", grade: "중1" },
+            { id: 62, class: "타이탄 B", name: "경서현", school: "임곡중", grade: "중1" },
+            { id: 63, class: "타이탄 B", name: "박가온", school: "부흥중", grade: "중1" },
+            { id: 64, class: "타이탄 B", name: "오서한", school: "부흥중", grade: "중1" },
+            { id: 65, class: "타이탄 B", name: "이종훈", school: "부흥중", grade: "중1" },
+            { id: 66, class: "타이탄 B", name: "정혜원", school: "임곡중", grade: "중1" },
+            { id: 67, class: "타이탄 B", name: "조하람", school: "임곡중", grade: "중1" }
+        ];
+
+        // 입체어휘 4000 단어 시스템 (수정된 버전)
+        const vocabularyOptions = (() => {
+            const options = [];
+            for (let unit = 1; unit <= 40; unit++) {
+                const baseNumber = (unit - 1) * 100;
+                
+                // 1차 - 플래시카드 (1-50, 51-100)
+                options.push({
+                    value: `unit${unit}_stage1_flashcard1`,
+                    text: `Unit ${unit} - 1차 플래시카드 (${baseNumber + 1}-${baseNumber + 50})`,
+                    unit: unit,
+                    stage: 1,
+                    type: 'flashcard',
+                    part: 1
+                });
+                options.push({
+                    value: `unit${unit}_stage1_flashcard2`,
+                    text: `Unit ${unit} - 1차 플래시카드 (${baseNumber + 51}-${baseNumber + 100})`,
+                    unit: unit,
+                    stage: 1,
+                    type: 'flashcard',
+                    part: 2
+                });
+                
+                // 2차 - 의미시험 (1-50, 51-100)
+                options.push({
+                    value: `unit${unit}_stage2_meaning1`,
+                    text: `Unit ${unit} - 2차 의미시험 (${baseNumber + 1}-${baseNumber + 50})`,
+                    unit: unit,
+                    stage: 2,
+                    type: 'meaning',
+                    part: 1
+                });
+                options.push({
+                    value: `unit${unit}_stage2_meaning2`,
+                    text: `Unit ${unit} - 2차 의미시험 (${baseNumber + 51}-${baseNumber + 100})`,
+                    unit: unit,
+                    stage: 2,
+                    type: 'meaning',
+                    part: 2
+                });
+                
+                // 3차 - 스펠링시험 (1-25, 26-50, 51-75, 76-100)
+                for (let part = 1; part <= 4; part++) {
+                    const startNum = baseNumber + (part - 1) * 25 + 1;
+                    const endNum = baseNumber + part * 25;
+                    options.push({
+                        value: `unit${unit}_stage3_spelling${part}`,
+                        text: `Unit ${unit} - 3차 스펠링시험 (${startNum}-${endNum})`,
+                        unit: unit,
+                        stage: 3,
+                        type: 'spelling',
+                        part: part
+                    });
+                }
+            }
+            return options;
+        })();
+
+        // 입체어휘 값을 사람이 읽기 쉬운 형태로 변환하는 함수
+        function formatVocabularyText(value) {
+            if (!value) return '';
+            
+            const option = vocabularyOptions.find(opt => opt.value === value);
+            return option ? option.text : value;
+        }
+
+        // 소리훈련 시스템 (수정된 버전)
+        const phonicsOptions = [
+            { value: 'cory_best_friend', text: '[Cory Carson] Chrissey\'s Best Friend' },
+            { value: 'charlie_pancake', text: '[Charlie\'s Colorforms City] Charlie\'s Pancake Chef' },
+            { value: 'chip_morning', text: '[Chip and Potato] Morning Potato' },
+            { value: 'spirit_thunder', text: '[Spirit Rangers] Thunder Mountain' },
+            { value: 'cory_first_day', text: '[Cory Carson] Cory\'s First Day' },
+            { value: 'clifford_get_well', text: '[Clifford] Get Well' },
+            { value: 'clifford_mimi', text: '[Clifford] Mimi\'s Back In Town' },
+            { value: 'clifford_dog_day', text: '[Clifford] Dog for a Day' },
+            { value: 'clifford_mess', text: '[Clifford] Another Fine Mess' },
+            { value: 'arthur_mr_rogers', text: '[Arthur] Arthur Meets Mr. Rogers' },
+            { value: 'arthur_water_brain', text: '[Arthur] Water and the Brain' },
+            { value: 'arthur_draw', text: '[Arthur] Draw' },
+            { value: 'arthur_binky', text: '[Arthur] Binky Art Expert' },
+            { value: 'charlie_brown_dog', text: '[Charlie Brown] He\'s Your Dog' },
+            { value: 'charlie_brown_lucy', text: '[Charlie Brown] Lucy Must Be Traded' },
+            { value: 'charlie_brown_happiness', text: '[Charlie Brown] Happiness Is a ...' },
+            { value: 'hollow_season1', text: '[The Hollow] Season 1' },
+            { value: 'talking_tom_audition', text: '[Talking Tom] The Audition' },
+            { value: 'untalking_tom', text: '[UnTalking Tom] UnTalking Tom' },
+            { value: 'bare_bears_stuff', text: '[We Bare Bears] Our Stuff' },
+            { value: 'news_basic1', text: '[News] Basic 1' },
+            { value: 'news_advanced', text: '[News] Advanced' }
+        ];
+
+        // 전역 변수
+        let currentDate = new Date().toISOString().split('T')[0];
+        let homeworkData = {};
+        let studentProgress = {}; // 학생별 진도 추적
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            loadStudentsData();
+            
+            document.getElementById('homework-date').value = currentDate;
+            populateClassFilter();
+            populateBulkOptions();
+            renderStudents();
+            updateStats();
+            
+            document.getElementById('homework-date').addEventListener('change', onDateChange);
+            document.getElementById('class-filter').addEventListener('change', onClassFilterChange);
+            document.getElementById('bulk-category').addEventListener('change', onBulkCategoryChange);
+            
+            loadHomeworkData();
+            loadStudentProgress();
+        }
+
+        function populateClassFilter() {
+            const classFilter = document.getElementById('class-filter');
+            const classes = [...new Set(studentsData.map(student => student.class))].sort();
+            
+            classes.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                classFilter.appendChild(option);
+            });
+        }
+
+        function populateBulkOptions() {
+            const bulkClass = document.getElementById('bulk-class');
+            const classes = [...new Set(studentsData.map(student => student.class))].sort();
+            
+            classes.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                bulkClass.appendChild(option);
+            });
+        }
+
+        function onBulkCategoryChange() {
+            const category = document.getElementById('bulk-category').value;
+            const bulkHomework = document.getElementById('bulk-homework');
+            
+            bulkHomework.innerHTML = '<option value="">숙제 선택</option>';
+            
+            if (category === 'vocabulary') {
+                vocabularyOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
+                    bulkHomework.appendChild(optionElement);
+                });
+            } else if (category === 'phonics') {
+                phonicsOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
+                    bulkHomework.appendChild(optionElement);
+                });
+            } else if (category === 'quizletEnabled') {
+                const enableOption = document.createElement('option');
+                enableOption.value = 'true';
+                enableOption.textContent = '활성화';
+                bulkHomework.appendChild(enableOption);
+                
+                const disableOption = document.createElement('option');
+                disableOption.value = 'false';
+                disableOption.textContent = '비활성화';
+                bulkHomework.appendChild(disableOption);
+            }
+        }
+
+        function renderStudents() {
+            const container = document.getElementById('classes-container');
+            const classFilter = document.getElementById('class-filter').value;
+            
+            let filteredStudents = studentsData;
+            if (classFilter !== 'all') {
+                filteredStudents = studentsData.filter(student => student.class === classFilter);
+            }
+            
+            const groupedStudents = {};
+            filteredStudents.forEach(student => {
+                if (!groupedStudents[student.class]) {
+                    groupedStudents[student.class] = [];
+                }
+                groupedStudents[student.class].push(student);
+            });
+            
+            container.innerHTML = '';
+            Object.keys(groupedStudents).sort().forEach(className => {
+                const students = groupedStudents[className];
+                const classSection = createClassSection(className, students);
+                container.appendChild(classSection);
+            });
+        }
+
+        function createClassSection(className, students) {
+            const section = document.createElement('div');
+            section.className = 'class-section';
+            section.innerHTML = `
+                <div class="class-header" onclick="toggleClass('${className}')">
+                    <h2>${className}</h2>
+                    <div class="class-info">
+                        <span class="student-count">${students.length}명</span>
+                        <button class="toggle-btn" id="toggle-${className}">▼</button>
+                    </div>
+                </div>
+                <div class="students-grid" id="students-${className}">
+                    ${students.map(student => createStudentCard(student)).join('')}
+                </div>
+            `;
+            return section;
+        }
+
+        function createStudentCard(student) {
+            const homework = getHomeworkForStudent(student.id);
+            const progress = getStudentProgress(student.id);
+            
+            // 특정 반들에 대한 다른 UI
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const isSpecialClass = specialClasses.includes(student.class);
+            
+            if (isSpecialClass) {
+                return `
+                    <div class="student-card">
+                        <div class="student-info">
+                            <div>
+                                <div class="student-name">${student.name}</div>
+                                <div class="student-details">${student.school} ${student.grade}</div>
+                                <div class="student-date">${new Date().toLocaleDateString('ko-KR')}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-section">
+                            <div class="homework-item">
+                                <div class="homework-label">📝 어휘시험</div>
+                                <input type="text" class="homework-input" 
+                                       placeholder="어휘시험 진도를 입력하세요"
+                                       value="${homework.vocabularyTest || ''}"
+                                       onchange="updateHomework(${student.id}, 'vocabularyTest', this.value)">
+                            </div>
+                            
+                            <div class="homework-item">
+                                <div class="homework-label">🔤 소리훈련</div>
+                                <select class="homework-select" 
+                                        onchange="updateHomework(${student.id}, 'phonics', this.value)">
+                                    <option value="">선택하세요</option>
+                                    ${phonicsOptions.map(option => 
+                                        `<option value="${option.value}" ${homework.phonics === option.value ? 'selected' : ''}>${option.text}</option>`
+                                    ).join('')}
+                                </select>
+                                <div class="phonics-progress-input">
+                                    <span>다음 진도:</span>
+                                    <input type="text" 
+                                           placeholder="진도 입력" 
+                                           value="${homework.phonicsProgress || ''}"
+                                           onchange="updateHomework(${student.id}, 'phonicsProgress', this.value)">
+                                </div>
+                            </div>
+                            
+                            <div class="homework-item">
+                                <div class="homework-label">📚 원서수업</div>
+                                <input type="text" class="homework-input" 
+                                       placeholder="원서수업 내용을 입력하세요"
+                                       value="${homework.reading || ''}"
+                                       onchange="updateHomework(${student.id}, 'reading', this.value)">
+                            </div>
+                            
+                            <div class="homework-item">
+                                <div class="homework-label">📖 문법</div>
+                                <input type="text" class="homework-input" 
+                                       placeholder="문법 숙제를 입력하세요"
+                                       value="${homework.grammar || ''}"
+                                       onchange="updateHomework(${student.id}, 'grammar', this.value)">
+                            </div>
+                        </div>
+                        
+                        <div class="evaluation-section" style="margin-bottom: 15px;">
+                            <div class="homework-label">📊 평가 결과</div>
+                            <div style="display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap;">
+                                <div class="custom-checkbox">
+                                    <input type="checkbox" 
+                                           id="vocab-pass-${student.id}"
+                                           ${homework.vocabularyPass ? 'checked' : ''}
+                                           onchange="updateHomework(${student.id}, 'vocabularyPass', this.checked)">
+                                    <label for="vocab-pass-${student.id}">📝 어휘합격</label>
+                                </div>
+                                <div class="custom-checkbox">
+                                    <input type="checkbox" 
+                                           id="phonics-pass-${student.id}"
+                                           ${homework.phonicsPass ? 'checked' : ''}
+                                           onchange="updateHomework(${student.id}, 'phonicsPass', this.checked)">
+                                    <label for="phonics-pass-${student.id}">🔤 소리훈련 합격</label>
+                                </div>
+                                <div class="custom-checkbox">
+                                    <input type="checkbox" 
+                                           id="grammar-complete-${student.id}"
+                                           ${homework.grammarComplete ? 'checked' : ''}
+                                           onchange="updateHomework(${student.id}, 'grammarComplete', this.checked)">
+                                    <label for="grammar-complete-${student.id}">📖 문법숙제 완료</label>
+                                </div>
+                                <div class="custom-checkbox">
+                                    <input type="checkbox" 
+                                           id="quizlet-pass-${student.id}"
+                                           ${homework.quizletPass ? 'checked' : ''}
+                                           onchange="updateHomework(${student.id}, 'quizletPass', this.checked)">
+                                    <label for="quizlet-pass-${student.id}">🎯 퀴즐릿 합격</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feedback-section">
+                            <div class="homework-label">💬 피드백</div>
+                            <textarea class="feedback-textarea" 
+                                      placeholder="학생에게 전달할 피드백을 입력하세요..."
+                                      onchange="updateHomework(${student.id}, 'feedback', this.value)">${homework.feedback || ''}</textarea>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <button class="save-btn" onclick="saveStudentHomework(${student.id})" style="flex: 1;">
+                                💾 저장
+                            </button>
+                            <button class="save-btn" onclick="showProgressModal(${student.id})" style="flex: 1; background: #fa8c16;">
+                                📊 진도관리
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button class="save-btn" onclick="copyStudentHomework(${student.id})" style="flex: 1; background: #1890ff;">
+                                📋 복사
+                            </button>
+                            <button class="save-btn" onclick="printStudentHomework(${student.id})" style="flex: 1; background: #722ed1;">
+                                🖨️ 인쇄
+                            </button>
+                            <button class="save-btn" onclick="showHomeworkSummary(${student.id})" style="flex: 1; background: #52c41a;">
+                                📄 요약
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button class="save-btn" onclick="showParentFeedback(${student.id})" style="flex: 1; background: #fa541c;">
+                                📨 부모님 피드백
+                            </button>
+                            ${getHomeworkForStudent(student.id).finalized ?
+                                `<button class="save-btn" style="flex: 1; background: #52c41a; opacity: 0.6;" disabled>
+                                    ✅ 완료됨
+                                </button>` :
+                                `<button class="save-btn" onclick="finalizeStudent(${student.id})" style="flex: 1; background: #13c2c2;">
+                                    🎯 최종완료
+                                </button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 기존 반들을 위한 기본 UI
+            return `
+                <div class="student-card">
+                    <div class="student-info">
+                        <div>
+                            <div class="student-name">${student.name}</div>
+                            <div class="student-details">${student.school} ${student.grade}</div>
+                            <div class="student-date">${new Date().toLocaleDateString('ko-KR')}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="homework-section">
+                        <div class="homework-item">
+                            <div class="homework-label">📚 어휘 (입체어휘 4000)</div>
+                            <select class="homework-select" 
+                                    onchange="updateHomework(${student.id}, 'vocabulary', this.value)">
+                                <option value="">선택하세요</option>
+                                ${vocabularyOptions.map(option => 
+                                    `<option value="${option.value}" ${homework.vocabulary === option.value ? 'selected' : ''}>${option.text}</option>`
+                                ).join('')}
+                            </select>
+                            <div class="progress-indicator">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${calculateVocabularyProgress(student.id)}%"></div>
+                                </div>
+                                <div class="progress-text">${calculateVocabularyProgress(student.id)}%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-label">🔤 소리훈련</div>
+                            <select class="homework-select" 
+                                    onchange="updateHomework(${student.id}, 'phonics', this.value)">
+                                <option value="">선택하세요</option>
+                                ${phonicsOptions.map(option => 
+                                    `<option value="${option.value}" ${homework.phonics === option.value ? 'selected' : ''}>${option.text}</option>`
+                                ).join('')}
+                            </select>
+                            <div class="phonics-progress-input">
+                                <span>다음 진도:</span>
+                                <input type="text" 
+                                       placeholder="진도 입력" 
+                                       value="${homework.phonicsProgress || ''}"
+                                       onchange="updateHomework(${student.id}, 'phonicsProgress', this.value)">
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-label">📖 독서</div>
+                            <input type="text" class="homework-input" 
+                                   placeholder="책 이름을 입력하세요"
+                                   value="${homework.reading || ''}"
+                                   onchange="updateHomework(${student.id}, 'reading', this.value)">
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-label">📖 문법</div>
+                            <input type="text" class="homework-input" 
+                                   placeholder="문법 숙제를 입력하세요"
+                                   value="${homework.grammar || ''}"
+                                   onchange="updateHomework(${student.id}, 'grammar', this.value)">
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-label">✏️ 기타</div>
+                            <div class="quizlet-section">
+                                <div class="custom-checkbox">
+                                    <input type="checkbox" 
+                                           id="quizlet-${student.id}"
+                                           ${homework.quizletEnabled ? 'checked' : ''}
+                                           onchange="updateHomework(${student.id}, 'quizletEnabled', this.checked)">
+                                    <label for="quizlet-${student.id}">퀴즐릿 학습하기</label>
+                                </div>
+                                <div class="custom-checkbox">
+                                    <input type="checkbox" 
+                                           id="prepare-quizlet-${student.id}"
+                                           ${homework.prepareQuizlet ? 'checked' : ''}
+                                           onchange="updateHomework(${student.id}, 'prepareQuizlet', this.checked)">
+                                    <label for="prepare-quizlet-${student.id}">"퀴즐릿 시험을 준비하세요" 문구</label>
+                                </div>
+                                <input type="url" class="homework-input" 
+                                       placeholder="퀴즐릿 URL을 입력하세요"
+                                       value="${homework.quizletUrl || ''}"
+                                       onchange="updateHomework(${student.id}, 'quizletUrl', this.value)"
+                                       ${!homework.quizletEnabled ? 'disabled' : ''}>
+                                <input type="text" class="homework-input" 
+                                       placeholder="기타 숙제를 입력하세요"
+                                       value="${homework.other || ''}"
+                                       onchange="updateHomework(${student.id}, 'other', this.value)">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="evaluation-section" style="margin-bottom: 15px;">
+                        <div class="homework-label">📊 평가 결과</div>
+                        <div style="display: flex; gap: 15px; margin-top: 10px;">
+                            <div class="custom-checkbox">
+                                <input type="checkbox" 
+                                       id="vocab-pass-${student.id}"
+                                       ${homework.vocabularyPass ? 'checked' : ''}
+                                       onchange="updateHomework(${student.id}, 'vocabularyPass', this.checked)">
+                                <label for="vocab-pass-${student.id}">📚 입체어휘 합격</label>
+                            </div>
+                            <div class="custom-checkbox">
+                                <input type="checkbox" 
+                                       id="phonics-pass-${student.id}"
+                                       ${homework.phonicsPass ? 'checked' : ''}
+                                       onchange="updateHomework(${student.id}, 'phonicsPass', this.checked)">
+                                <label for="phonics-pass-${student.id}">🔤 소리훈련 합격</label>
+                            </div>
+                            <div class="custom-checkbox">
+                                <input type="checkbox" 
+                                       id="grammar-complete-${student.id}"
+                                       ${homework.grammarComplete ? 'checked' : ''}
+                                       onchange="updateHomework(${student.id}, 'grammarComplete', this.checked)">
+                                <label for="grammar-complete-${student.id}">📖 문법숙제 완료</label>
+                            </div>
+                            <div class="custom-checkbox">
+                                <input type="checkbox" 
+                                       id="quizlet-pass-${student.id}"
+                                       ${homework.quizletPass ? 'checked' : ''}
+                                       onchange="updateHomework(${student.id}, 'quizletPass', this.checked)">
+                                <label for="quizlet-pass-${student.id}">🎯 퀴즐릿 합격</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feedback-section">
+                        <div class="homework-label">💬 피드백</div>
+                        <textarea class="feedback-textarea" 
+                                  placeholder="학생에게 전달할 피드백을 입력하세요..."
+                                  onchange="updateHomework(${student.id}, 'feedback', this.value)">${homework.feedback || ''}</textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 10px;">
+                        <button class="save-btn" onclick="saveStudentHomework(${student.id})" style="flex: 1;">
+                            💾 저장
+                        </button>
+                        <button class="save-btn" onclick="showProgressModal(${student.id})" style="flex: 1; background: #fa8c16;">
+                            📊 진도관리
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="save-btn" onclick="copyStudentHomework(${student.id})" style="flex: 1; background: #1890ff;">
+                            📋 복사
+                        </button>
+                        <button class="save-btn" onclick="printStudentHomework(${student.id})" style="flex: 1; background: #722ed1;">
+                            🖨️ 인쇄
+                        </button>
+                        <button class="save-btn" onclick="showHomeworkSummary(${student.id})" style="flex: 1; background: #52c41a;">
+                            📄 요약
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="save-btn" onclick="showParentFeedback(${student.id})" style="flex: 1; background: #fa541c;">
+                            📨 부모님 피드백
+                        </button>
+                        ${getHomeworkForStudent(student.id).finalized ?
+                            `<button class="save-btn" style="flex: 1; background: #52c41a; opacity: 0.6;" disabled>
+                                ✅ 완료됨
+                            </button>` :
+                            `<button class="save-btn" onclick="finalizeStudent(${student.id})" style="flex: 1; background: #13c2c2;">
+                                🎯 최종완료
+                            </button>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateVocabularyProgress(studentId) {
+            const progress = getStudentProgress(studentId);
+            const currentUnit = progress.vocabulary?.currentUnit || 1;
+            const currentStage = progress.vocabulary?.currentStage || 1;
+            const currentPart = progress.vocabulary?.currentPart || 1;
+            
+            // 전체 진도 계산 (40 유닛 × 3 단계 × 평균 파트)
+            const totalProgress = ((currentUnit - 1) * 3 + (currentStage - 1) + (currentPart / 4)) / (40 * 3) * 100;
+            return Math.min(100, Math.max(0, Math.round(totalProgress)));
+        }
+
+        function getStudentProgress(studentId) {
+            if (!studentProgress[studentId]) {
+                studentProgress[studentId] = {
+                    vocabulary: { currentUnit: 1, currentStage: 1, currentPart: 1 }
+                };
+            }
+            return studentProgress[studentId];
+        }
+
+        function showProgressModal(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const progress = getStudentProgress(studentId);
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 1000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 10px; width: 500px; max-width: 90%;" onclick="event.stopPropagation();">
+                    <h3>${student.name} 진도 관리</h3>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4>📚 어휘 진도</h4>
+                        <div style="margin: 10px 0;">
+                            <label>현재 유닛: </label>
+                            <input type="number" id="vocab-unit" value="${progress.vocabulary.currentUnit}" min="1" max="40" style="width: 80px; padding: 5px;">
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <label>현재 단계: </label>
+                            <select id="vocab-stage" style="padding: 5px;">
+                                <option value="1" ${progress.vocabulary.currentStage === 1 ? 'selected' : ''}>1차 - 플래시카드</option>
+                                <option value="2" ${progress.vocabulary.currentStage === 2 ? 'selected' : ''}>2차 - 의미시험</option>
+                                <option value="3" ${progress.vocabulary.currentStage === 3 ? 'selected' : ''}>3차 - 스펠링시험</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="saveProgress(${studentId})" style="flex: 1; padding: 10px; background: #52c41a; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            💾 저장
+                        </button>
+                        <button onclick="closeProgressModal()" style="flex: 1; padding: 10px; background: #d9d9d9; color: black; border: none; border-radius: 5px; cursor: pointer;">
+                            ❌ 취소
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 모달 외부 클릭 시 닫기
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeProgressModal();
+                }
+            };
+            
+            document.body.appendChild(modal);
+            window.currentProgressModal = modal;
+        }
+
+        function saveProgress(studentId) {
+            const vocabUnit = parseInt(document.getElementById('vocab-unit').value);
+            const vocabStage = parseInt(document.getElementById('vocab-stage').value);
+            
+            studentProgress[studentId] = {
+                vocabulary: { currentUnit: vocabUnit, currentStage: vocabStage, currentPart: 1 }
+            };
+            
+            saveStudentProgress();
+            closeProgressModal();
+            renderStudents();
+            showNotification('진도가 업데이트되었습니다!', 'success');
+        }
+
+        function closeProgressModal() {
+            if (window.currentProgressModal) {
+                document.body.removeChild(window.currentProgressModal);
+                window.currentProgressModal = null;
+            }
+        }
+
+        // 학생별 숙제 복사 기능
+        function copyStudentHomework(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const homework = getHomeworkForStudent(studentId);
+            const progress = getStudentProgress(studentId);
+            
+            const homeworkText = formatHomeworkText(student, homework, progress);
+            
+            navigator.clipboard.writeText(homeworkText).then(() => {
+                showNotification(`${student.name} 학생의 숙제가 클립보드에 복사되었습니다!`, 'success');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                showNotification('복사에 실패했습니다.', 'error');
+            });
+        }
+
+        // 학생별 숙제 인쇄 기능
+        function printStudentHomework(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const homework = getHomeworkForStudent(studentId);
+            const progress = getStudentProgress(studentId);
+            
+            const printContent = formatHomeworkForPrint(student, homework, progress);
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${student.name} 학생 숙제</title>
+                    <style>
+                        body { font-family: 'Malgun Gothic', sans-serif; margin: 20px; line-height: 1.6; }
+                        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+                        .student-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                        .homework-section { margin-bottom: 20px; }
+                        .homework-item { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+                        .homework-title { font-weight: bold; color: #333; margin-bottom: 8px; }
+                        .homework-content { margin-left: 20px; }
+                        .progress-info { background: #e6f7ff; padding: 10px; border-radius: 5px; margin-top: 10px; }
+                        .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                    <div class="footer">
+                        <p>인쇄일: ${new Date().toLocaleDateString('ko-KR')} | 학생 숙제 관리 시스템</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.focus();
+            
+            // 로딩 후 자동 인쇄 다이얼로그 열기
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        }
+
+        // 학생별 숙제 요약 모달
+        function showHomeworkSummary(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const homework = getHomeworkForStudent(studentId);
+            const progress = getStudentProgress(studentId);
+            
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const isSpecialClass = specialClasses.includes(student.class);
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 1000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            let summaryContent = '';
+            
+            if (isSpecialClass) {
+                summaryContent = `
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #1890ff; margin-bottom: 15px;">📝 어휘시험</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>오늘 숙제:</strong> ${homework.vocabularyTest || '없음'}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #fa8c16; margin-bottom: 15px;">🔤 소리훈련</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>오늘 숙제:</strong> ${homework.phonics || '없음'}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>다음 진도:</strong> ${homework.phonicsProgress || '없음'}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #52c41a; margin-bottom: 15px;">📚 원서수업 & 문법</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>원서수업:</strong> ${homework.reading || '없음'}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>문법 숙제:</strong> ${homework.grammar || '없음'}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #722ed1; margin-bottom: 15px;">📊 평가 결과</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>어휘합격:</strong> 
+                            <span style="color: ${homework.vocabularyPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>소리훈련:</strong> 
+                            <span style="color: ${homework.phonicsPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>문법숙제:</strong> 
+                            <span style="color: ${homework.grammarComplete ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>퀴즐릿:</strong> 
+                            <span style="color: ${homework.quizletPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                summaryContent = `
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #1890ff; margin-bottom: 15px;">📚 어휘 (입체어휘 4000)</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>오늘 숙제:</strong> ${formatVocabularyText(homework.vocabulary) || '없음'}
+                        </div>
+                        <div style="background: #e6f7ff; padding: 10px; border-radius: 5px;">
+                            <strong>진도율:</strong> ${calculateVocabularyProgress(studentId)}%
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #fa8c16; margin-bottom: 15px;">🔤 소리훈련</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>오늘 숙제:</strong> ${homework.phonics || '없음'}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>다음 진도:</strong> ${homework.phonicsProgress || '없음'}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #52c41a; margin-bottom: 15px;">📖 독서 & 기타</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>독서 숙제:</strong> ${homework.reading || '없음'}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>퀴즐릿 학습:</strong> ${homework.quizletEnabled ? '활성화' : '비활성화'}
+                        </div>
+                        ${homework.quizletUrl ? `
+                        <div style="margin-bottom: 10px;">
+                            <strong>퀴즐릿 URL:</strong> <a href="${homework.quizletUrl}" target="_blank">${homework.quizletUrl}</a>
+                        </div>
+                        ` : ''}
+                        ${homework.prepareQuizlet ? `
+                        <div style="margin-bottom: 10px;">
+                            <strong>안내:</strong> "퀴즐릿 시험을 준비하세요"
+                        </div>
+                        ` : ''}
+                        <div style="margin-bottom: 10px;">
+                            <strong>기타 숙제:</strong> ${homework.other || '없음'}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #722ed1; margin-bottom: 15px;">📊 평가 결과</h3>
+                        <div style="margin-bottom: 10px;">
+                            <strong>입체어휘:</strong> 
+                            <span style="color: ${homework.vocabularyPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>소리훈련:</strong> 
+                            <span style="color: ${homework.phonicsPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}
+                            </span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>퀴즐릿:</strong> 
+                            <span style="color: ${homework.quizletPass ? '✅ 합격' : '#f5222d'}; font-weight: 600;">
+                                ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; width: 600px; max-width: 90%; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation();">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h2 style="color: #333; margin-bottom: 10px;">📋 ${student.name} 학생 숙제 요약</h2>
+                        <p style="color: #666;">${student.school} ${student.grade} | ${currentDate}</p>
+                    </div>
+                    
+                    ${summaryContent}
+                    
+                    ${homework.feedback ? `
+                    <div style="background: #f6ffed; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #389e0d; margin-bottom: 15px;">💬 피드백</h3>
+                        <div style="white-space: pre-wrap; line-height: 1.5;">${homework.feedback}</div>
+                    </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button onclick="copyFromSummary(${studentId})" style="flex: 1; padding: 12px; background: #1890ff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                            📋 복사하기
+                        </button>
+                        <button onclick="printFromSummary(${studentId})" style="flex: 1; padding: 12px; background: #722ed1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                            🖨️ 인쇄하기
+                        </button>
+                        <button onclick="closeSummaryModal()" style="flex: 1; padding: 12px; background: #d9d9d9; color: black; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                            ❌ 닫기
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 모달 외부 클릭 시 닫기
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeSummaryModal();
+                }
+            };
+            
+            document.body.appendChild(modal);
+            window.currentSummaryModal = modal;
+        }
+
+        function copyFromSummary(studentId) {
+            copyStudentHomework(studentId);
+        }
+
+        function printFromSummary(studentId) {
+            printStudentHomework(studentId);
+        }
+
+        function closeSummaryModal() {
+            if (window.currentSummaryModal) {
+                document.body.removeChild(window.currentSummaryModal);
+                window.currentSummaryModal = null;
+            }
+        }
+
+        // 숙제 텍스트 포맷팅
+        function formatHomeworkText(student, homework, progress) {
+            const date = new Date(currentDate).toLocaleDateString('ko-KR');
+            
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const isSpecialClass = specialClasses.includes(student.class);
+            
+            if (isSpecialClass) {
+                return `
+📋 ${student.name} 학생 숙제 (${date})
+${student.school} ${student.grade}
+
+📝 어휘시험
+• 오늘 숙제: ${homework.vocabularyTest || '없음'}
+
+🔤 소리훈련
+• 오늘 숙제: ${homework.phonics || '없음'}
+• 다음 진도: ${homework.phonicsProgress || '없음'}
+
+📚 원서수업 & 문법
+• 원서수업: ${homework.reading || '없음'}
+• 문법 숙제: ${homework.grammar || '없음'}
+
+📊 평가 결과
+• 어휘합격: ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}
+• 소리훈련: ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}
+• 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}
+• 퀴즐릿: ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}
+
+💬 피드백
+${homework.feedback || '없음'}
+
+---
+생성일: ${new Date().toLocaleString('ko-KR')}
+학생 숙제 관리 시스템
+                `.trim();
+            } else {
+                return `
+📋 ${student.name} 학생 숙제 (${date})
+${student.school} ${student.grade}
+
+📚 어휘 (입체어휘 4000)
+• 오늘 숙제: ${formatVocabularyText(homework.vocabulary) || '없음'}
+• 진도율: ${calculateVocabularyProgress(student.id)}%
+
+🔤 소리훈련
+• 오늘 숙제: ${homework.phonics || '없음'}
+• 다음 진도: ${homework.phonicsProgress || '없음'}
+
+📖 독서 & 기타
+• 독서 숙제: ${homework.reading || '없음'}
+• 퀴즐릿 학습: ${homework.quizletEnabled ? '활성화' : '비활성화'}${homework.quizletUrl ? `\n• 퀴즐릿 URL: ${homework.quizletUrl}` : ''}
+${homework.prepareQuizlet ? '• "퀴즐릿 시험을 준비하세요"' : ''}
+• 기타 숙제: ${homework.other || '없음'}
+
+📊 평가 결과
+• 입체어휘: ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}
+• 소리훈련: ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}
+• 퀴즐릿: ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}
+
+💬 피드백
+${homework.feedback || '없음'}
+
+---
+생성일: ${new Date().toLocaleString('ko-KR')}
+학생 숙제 관리 시스템
+                `.trim();
+            }
+        }
+
+        // 인쇄용 HTML 포맷팅
+        function formatHomeworkForPrint(student, homework, progress) {
+            const date = new Date(currentDate).toLocaleDateString('ko-KR');
+            
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const isSpecialClass = specialClasses.includes(student.class);
+            
+            if (isSpecialClass) {
+                return `
+                    <div class="header">
+                        <h1>📋 학생 숙제</h1>
+                        <h2>${student.name}</h2>
+                        <p>${date}</p>
+                    </div>
+                    
+                    <div class="student-info">
+                        <strong>학생 정보:</strong> ${student.school} ${student.grade}
+                    </div>
+                    
+                    <div class="homework-section">
+                        <div class="homework-item">
+                            <div class="homework-title">📝 어휘시험</div>
+                            <div class="homework-content">
+                                <p><strong>오늘 숙제:</strong> ${homework.vocabularyTest || '없음'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-title">🔤 소리훈련</div>
+                            <div class="homework-content">
+                                <p><strong>오늘 숙제:</strong> ${homework.phonics || '없음'}</p>
+                                <p><strong>다음 진도:</strong> ${homework.phonicsProgress || '없음'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-title">📚 원서수업 & 문법</div>
+                            <div class="homework-content">
+                                <p><strong>원서수업:</strong> ${homework.reading || '없음'}</p>
+                                <p><strong>문법 숙제:</strong> ${homework.grammar || '없음'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-title">📊 평가 결과</div>
+                            <div class="homework-content">
+                                <p><strong>어휘합격:</strong> 
+                                    <span style="color: ${homework.vocabularyPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                        ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}
+                                    </span>
+                                </p>
+                                <p><strong>소리훈련:</strong> 
+                                    <span style="color: ${homework.phonicsPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                        ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}
+                                    </span>
+                                </p>
+                                <p><strong>문법숙제:</strong> 
+                                    <span style="color: ${homework.grammarComplete ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                        ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}
+                                    </span>
+                                </p>
+                                <p><strong>퀴즐릿:</strong> 
+                                    <span style="color: ${homework.quizletPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                        ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        ${homework.feedback ? `
+                        <div class="homework-item">
+                            <div class="homework-title">💬 피드백</div>
+                            <div class="homework-content">
+                                <p style="white-space: pre-wrap; line-height: 1.6;">${homework.feedback}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="header">
+                        <h1>📋 학생 숙제</h1>
+                        <h2>${student.name}</h2>
+                        <p>${date}</p>
+                    </div>
+                    
+                    <div class="student-info">
+                        <strong>학생 정보:</strong> ${student.school} ${student.grade}
+                    </div>
+                    
+                    <div class="homework-section">
+                        <div class="homework-item">
+                            <div class="homework-title">📚 어휘 (입체어휘 4000)</div>
+                            <div class="homework-content">
+                                <p><strong>오늘 숙제:</strong> ${formatVocabularyText(homework.vocabulary) || '없음'}</p>
+                                <div class="progress-info">
+                                    <strong>진도율:</strong> ${calculateVocabularyProgress(student.id)}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-title">🔤 소리훈련</div>
+                            <div class="homework-content">
+                                <p><strong>오늘 숙제:</strong> ${homework.phonics || '없음'}</p>
+                                <p><strong>다음 진도:</strong> ${homework.phonicsProgress || '없음'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-title">📖 독서 & 기타</div>
+                            <div class="homework-content">
+                                <p><strong>독서 숙제:</strong> ${homework.reading || '없음'}</p>
+                                <p><strong>퀴즐릿 학습:</strong> ${homework.quizletEnabled ? '활성화' : '비활성화'}</p>
+                                ${homework.quizletUrl ? `<p><strong>퀴즐릿 URL:</strong> ${homework.quizletUrl}</p>` : ''}
+                                ${homework.prepareQuizlet ? `<p><strong>안내:</strong> "퀴즐릿 시험을 준비하세요"</p>` : ''}
+                                <p><strong>기타 숙제:</strong> ${homework.other || '없음'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-title">📊 평가 결과</div>
+                            <div class="homework-content">
+                                <p><strong>입체어휘:</strong> 
+                                    <span style="color: ${homework.vocabularyPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                        ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}
+                                    </span>
+                                </p>
+                                <p><strong>소리훈련:</strong> 
+                                    <span style="color: ${homework.phonicsPass ? '#52c41a' : '❌ 불합격'}; font-weight: 600;">
+                                        ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}
+                                    </span>
+                                </p>
+                                <p><strong>퀴즐릿:</strong> 
+                                    <span style="color: ${homework.quizletPass ? '#52c41a' : '#f5222d'}; font-weight: 600;">
+                                        ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        ${homework.feedback ? `
+                        <div class="homework-item">
+                            <div class="homework-title">💬 피드백</div>
+                            <div class="homework-content">
+                                <p style="white-space: pre-wrap; line-height: 1.6;">${homework.feedback}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        // 전체 반별 숙제 내보내기 기능 추가
+        function exportClassHomework() {
+            const classFilter = document.getElementById('class-filter').value;
+            let students = studentsData;
+            
+            if (classFilter !== 'all') {
+                students = studentsData.filter(student => student.class === classFilter);
+            }
+            
+            let allHomeworkText = `📋 ${classFilter === 'all' ? '전체' : classFilter}반 숙제 목록\n`;
+            allHomeworkText += `날짜: ${new Date(currentDate).toLocaleDateString('ko-KR')}\n`;
+            allHomeworkText += `생성일: ${new Date().toLocaleString('ko-KR')}\n`;
+            allHomeworkText += `${'='.repeat(50)}\n\n`;
+            
+            students.forEach((student, index) => {
+                const homework = getHomeworkForStudent(student.id);
+                const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+                const isSpecialClass = specialClasses.includes(student.class);
+                
+                allHomeworkText += `${index + 1}. ${student.name} (${student.school} ${student.grade})\n`;
+                
+                if (isSpecialClass) {
+                    allHomeworkText += `   📝 어휘시험: ${homework.vocabularyTest || '없음'}\n`;
+                    allHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                    if (homework.phonicsProgress) {
+                        allHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
+                    }
+                    allHomeworkText += `   📚 원서수업: ${homework.reading || '없음'}\n`;
+                    allHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
+                    allHomeworkText += `   📊 어휘합격: ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    allHomeworkText += `   📊 소리훈련: ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    allHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
+                    allHomeworkText += `   📊 퀴즐릿: ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                } else {
+                    allHomeworkText += `   📚 어휘: ${formatVocabularyText(homework.vocabulary) || '없음'}\n`;
+                    allHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                    if (homework.phonicsProgress) {
+                        allHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
+                    }
+                    allHomeworkText += `   📖 독서: ${homework.reading || '없음'}\n`;
+                    allHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
+                    if (homework.quizletEnabled && homework.quizletUrl) {
+                        allHomeworkText += `   🎯 퀴즐릿: ${homework.quizletUrl}\n`;
+                    }
+                    allHomeworkText += `   ✏️ 기타: ${homework.other || '없음'}\n`;
+                    allHomeworkText += `   📊 입체어휘: ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    allHomeworkText += `   📊 소리훈련: ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    allHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
+                    allHomeworkText += `   📊 퀴즐릿: ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                }
+                
+                if (homework.feedback) {
+                    allHomeworkText += `   💬 피드백: ${homework.feedback}\n`;
+                }
+                allHomeworkText += `\n`;
+            });
+            
+            navigator.clipboard.writeText(allHomeworkText).then(() => {
+                showNotification(`${classFilter === 'all' ? '전체' : classFilter}반 숙제 목록이 클립보드에 복사되었습니다!`, 'success');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                showNotification('복사에 실패했습니다.', 'error');
+            });
+        }
+
+        // 일괄 작업에서 선택한 반의 숙제 복사
+        function copyBulkHomework() {
+            const className = document.getElementById('bulk-class').value;
+            
+            if (!className) {
+                showNotification('복사할 반을 선택해주세요!', 'error');
+                return;
+            }
+            
+            const studentsInClass = studentsData.filter(student => student.class === className);
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const isSpecialClass = specialClasses.includes(className);
+            
+            let classHomeworkText = `📋 ${className}반 숙제 목록\n`;
+            classHomeworkText += `날짜: ${new Date(currentDate).toLocaleDateString('ko-KR')}\n`;
+            classHomeworkText += `생성일: ${new Date().toLocaleString('ko-KR')}\n`;
+            classHomeworkText += `${'='.repeat(50)}\n\n`;
+            
+            studentsInClass.forEach((student, index) => {
+                const homework = getHomeworkForStudent(student.id);
+                
+                classHomeworkText += `${index + 1}. ${student.name} (${student.school} ${student.grade})\n`;
+                
+                if (isSpecialClass) {
+                    classHomeworkText += `   📝 어휘시험: ${homework.vocabularyTest || '없음'}\n`;
+                    classHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                    if (homework.phonicsProgress) {
+                        classHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
+                    }
+                    classHomeworkText += `   📚 원서수업: ${homework.reading || '없음'}\n`;
+                    classHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
+                    classHomeworkText += `   📊 어휘합격: ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    classHomeworkText += `   📊 소리훈련: ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    classHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
+                    classHomeworkText += `   📊 퀴즐릿: ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                } else {
+                    classHomeworkText += `   📚 어휘: ${formatVocabularyText(homework.vocabulary) || '없음'}\n`;
+                    classHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                    if (homework.phonicsProgress) {
+                        classHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
+                    }
+                    classHomeworkText += `   📖 독서: ${homework.reading || '없음'}\n`;
+                    classHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
+                    if (homework.quizletEnabled && homework.quizletUrl) {
+                        classHomeworkText += `   🎯 퀴즐릿: ${homework.quizletUrl}\n`;
+                    }
+                    classHomeworkText += `   ✏️ 기타: ${homework.other || '없음'}\n`;
+                    classHomeworkText += `   📊 입체어휘: ${homework.vocabularyPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    classHomeworkText += `   📊 소리훈련: ${homework.phonicsPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                    classHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
+                    classHomeworkText += `   📊 퀴즐릿: ${homework.quizletPass ? '✅ 합격' : '❌ 불합격'}\n`;
+                }
+                
+                if (homework.feedback) {
+                    classHomeworkText += `   💬 피드백: ${homework.feedback}\n`;
+                }
+                classHomeworkText += `\n`;
+            });
+            
+            navigator.clipboard.writeText(classHomeworkText).then(() => {
+                showNotification(`${className}반 숙제 목록이 클립보드에 복사되었습니다!`, 'success');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                showNotification('복사에 실패했습니다.', 'error');
+            });
+        }
+
+        function toggleClass(className) {
+            const studentsGrid = document.getElementById(`students-${className}`);
+            const toggleBtn = document.getElementById(`toggle-${className}`);
+            
+            if (studentsGrid.classList.contains('expanded')) {
+                studentsGrid.classList.remove('expanded');
+                toggleBtn.textContent = '▼';
+                toggleBtn.classList.remove('collapsed');
+            } else {
+                studentsGrid.classList.add('expanded');
+                toggleBtn.textContent = '▲';
+                toggleBtn.classList.add('collapsed');
+            }
+        }
+
+        function getHomeworkForStudent(studentId) {
+            const dateKey = currentDate;
+            if (!homeworkData[dateKey]) {
+                homeworkData[dateKey] = {};
+            }
+            if (!homeworkData[dateKey][studentId]) {
+                homeworkData[dateKey][studentId] = {
+                    vocabulary: '',
+                    vocabularyTest: '',
+                    phonics: '',
+                    phonicsProgress: '',
+                    reading: '',
+                    other: '',
+                    grammar: '',
+                    quizletEnabled: true,
+                    quizletUrl: '',
+                    vocabularyPass: true,
+                    phonicsPass: true,
+                    quizletPass: true,
+                    prepareQuizlet: true,
+                    grammarComplete: false,
+                    feedback: ''
+                };
+            }
+            return homeworkData[dateKey][studentId];
+        }
+
+        function updateHomework(studentId, category, value) {
+            const dateKey = currentDate;
+            if (!homeworkData[dateKey]) {
+                homeworkData[dateKey] = {};
+            }
+            if (!homeworkData[dateKey][studentId]) {
+                homeworkData[dateKey][studentId] = {};
+            }
+            
+            homeworkData[dateKey][studentId][category] = value;
+
+            // 독서와 문법숙제는 반 전체 공통 적용
+            if (category === 'reading' || category === 'grammar') {
+                const student = studentsData.find(s => s.id === studentId);
+                if (student) {
+                    const studentsInClass = studentsData.filter(s => s.class === student.class);
+                    studentsInClass.forEach(s => {
+                        if (!homeworkData[dateKey][s.id]) {
+                            homeworkData[dateKey][s.id] = {};
+                        }
+                        homeworkData[dateKey][s.id][category] = value;
+                    });
+                    saveHomeworkData();
+                    renderStudents();
+                }
+            }
+            
+            // 퀴즐릿 상태 변경 시 UI 업데이트
+            if (category === 'quizletEnabled') {
+                renderStudents();
+            }
+            
+            updateStats();
+        }
+
+        function saveStudentHomework(studentId) {
+            saveHomeworkData();
+            showNotification('학생 숙제가 저장되었습니다!', 'success');
+        }
+
+        function applyBulkHomework() {
+            const className = document.getElementById('bulk-class').value;
+            const category = document.getElementById('bulk-category').value;
+            const homework = document.getElementById('bulk-homework').value;
+            
+            if (!className || !category || !homework) {
+                showNotification('모든 필드를 선택해주세요!', 'error');
+                return;
+            }
+            
+            const studentsInClass = studentsData.filter(student => student.class === className);
+            
+            studentsInClass.forEach(student => {
+                if (category === 'quizletEnabled') {
+                    updateHomework(student.id, category, homework === 'true');
+                } else {
+                    updateHomework(student.id, category, homework);
+                }
+            });
+            
+            renderStudents();
+            saveHomeworkData();
+            showNotification(`${className} 반 ${studentsInClass.length}명에게 ${category} 숙제가 일괄 적용되었습니다!`, 'success');
+        }
+
+        function onDateChange() {
+            currentDate = document.getElementById('homework-date').value;
+            renderStudents();
+            updateStats();
+        }
+
+        function onClassFilterChange() {
+            renderStudents();
+            updateStats();
+        }
+
+        function updateStats() {
+            const classFilter = document.getElementById('class-filter').value;
+            let students = studentsData;
+            
+            if (classFilter !== 'all') {
+                students = studentsData.filter(student => student.class === classFilter);
+            }
+            
+            const totalStudents = students.length;
+            let completedHomework = 0;
+            
+            students.forEach(student => {
+                const homework = getHomeworkForStudent(student.id);
+                const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+                const isSpecialClass = specialClasses.includes(student.class);
+                
+                if (isSpecialClass) {
+                    if (homework.vocabularyTest || homework.phonics || homework.reading || homework.grammar) {
+                        completedHomework++;
+                    }
+                } else {
+                    if (homework.vocabulary || homework.phonics || homework.reading || homework.other) {
+                        completedHomework++;
+                    }
+                }
+            });
+            
+            const completionRate = totalStudents > 0 ? Math.round((completedHomework / totalStudents) * 100) : 0;
+            
+            document.getElementById('total-students').textContent = totalStudents;
+            document.getElementById('completed-homework').textContent = completedHomework;
+            document.getElementById('completion-rate').textContent = completionRate + '%';
+        }
+
+        function saveHomeworkData() {
+            try {
+                localStorage.setItem('homework-data', JSON.stringify(homeworkData));
+            } catch (error) {
+                console.error('데이터 저장 실패:', error);
+                showNotification('데이터 저장에 실패했습니다.', 'error');
+            }
+        }
+
+        function loadHomeworkData() {
+            try {
+                const savedData = localStorage.getItem('homework-data');
+                if (savedData) {
+                    homeworkData = JSON.parse(savedData);
+                }
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                homeworkData = {};
+            }
+        }
+
+        function saveStudentProgress() {
+            try {
+                localStorage.setItem('student-progress', JSON.stringify(studentProgress));
+            } catch (error) {
+                console.error('진도 저장 실패:', error);
+                showNotification('진도 저장에 실패했습니다.', 'error');
+            }
+        }
+
+        function loadStudentProgress() {
+            try {
+                const savedProgress = localStorage.getItem('student-progress');
+                if (savedProgress) {
+                    studentProgress = JSON.parse(savedProgress);
+                }
+            } catch (error) {
+                console.error('진도 로드 실패:', error);
+                studentProgress = {};
+            }
+        }
+
+        function exportHomework() {
+            const dateKey = currentDate;
+            const data = homeworkData[dateKey] || {};
+            
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            csvContent += '반,학생명,학교,학년,어휘/어휘시험,소리,소리진도,독서/원서수업,퀴즐릿활성화,퀴즐릿URL,기타/문법,어휘평가,소리훈련평가,퀴즐릿평가,문법완료,피드백,어휘진도,최종완료\n';
+            
+            studentsData.forEach(student => {
+                const homework = data[student.id] || {};
+                const progress = getStudentProgress(student.id);
+                const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+                const isSpecialClass = specialClasses.includes(student.class);
+                
+                const row = [
+                    student.class,
+                    student.name,
+                    student.school,
+                    student.grade,
+                    isSpecialClass ? (homework.vocabularyTest || '') : (formatVocabularyText(homework.vocabulary) || ''),
+                    homework.phonics || '',
+                    homework.phonicsProgress || '',
+                    homework.reading || '',
+                    homework.quizletEnabled ? '예' : '아니오',
+                    homework.quizletUrl || '',
+                    isSpecialClass ? (homework.grammar || '') : (homework.other || ''),
+                    homework.vocabularyPass ? '합격' : '불합격',
+                    homework.phonicsPass ? '합격' : '불합격',
+                    homework.quizletPass ? '합격' : '불합격',
+                    homework.grammarComplete ? '완료' : '미완료',
+                    homework.feedback || '',
+                    `Unit ${progress.vocabulary.currentUnit} - ${progress.vocabulary.currentStage}차`,
+                    homework.finalized ? '완료' : '미완료'
+                ].map(field => `"${field}"`).join(',');
+                
+                csvContent += row + '\n';
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `homework_${currentDate}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('숙제 데이터가 내보내졌습니다!', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 자동 저장 기능
+        setInterval(() => {
+            saveHomeworkData();
+            saveStudentProgress();
+        }, 30000); // 30초마다 자동 저장
+
+        // 키보드 단축키 기능
+        document.addEventListener('keydown', function(event) {
+            // Ctrl+S: 전체 저장
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                saveHomeworkData();
+                saveStudentProgress();
+                showNotification('모든 데이터가 저장되었습니다!', 'success');
+            }
+            
+            // Ctrl+E: 현재 화면 내보내기
+            if (event.ctrlKey && event.key === 'e') {
+                event.preventDefault();
+                exportClassHomework();
+            }
+            
+            // ESC: 모든 모달 닫기
+            if (event.key === 'Escape') {
+                closeProgressModal();
+                closeSummaryModal();
+            }
+        });
+
+        // 시스템 가이드 표시
+        function showSystemGuide() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 1000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; width: 700px; max-width: 90%; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation();">
+                    <h2 style="text-align: center; margin-bottom: 20px;">📚 시스템 사용 가이드</h2>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #1890ff;">🎯 주요 기능</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li><strong>개별 학생 관리:</strong> 각 학생별로 어휘, 소리, 독서, 기타 숙제 설정</li>
+                            <li><strong>특별반 관리:</strong> 가니메데, 유로파 A/B, 타이탄 A/B 반은 어휘시험, 원서수업, 문법 형태</li>
+                            <li><strong>진도 추적:</strong> 입체어휘 4000 진도 자동 관리</li>
+                            <li><strong>소리훈련:</strong> 22개 프로그램 중 선택 및 진도 기록</li>
+                            <li><strong>평가 시스템:</strong> 어휘합격, 소리훈련 합격, 문법숙제 완료 체크</li>
+                            <li><strong>일괄 작업:</strong> 반별로 같은 숙제 일괄 적용</li>
+                            <li><strong>복사/인쇄:</strong> 학생별 또는 반별 숙제 복사 및 인쇄</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #fa8c16;">⌨️ 키보드 단축키</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li><strong>Ctrl + S:</strong> 전체 데이터 저장</li>
+                            <li><strong>Ctrl + E:</strong> 현재 화면 내보내기</li>
+                            <li><strong>ESC:</strong> 모든 모달 닫기</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #52c41a;">📋 특별반 기능</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li><strong>어휘시험:</strong> 입체어휘 4000 대신 직접 진도 입력</li>
+                            <li><strong>원서수업:</strong> 독서 대신 원서수업 내용 입력</li>
+                            <li><strong>문법:</strong> 기타 대신 문법 숙제 입력</li>
+                            <li><strong>퀴즐릿 제거:</strong> 특별반에서는 퀴즐릿 기능 없음</li>
+                            <li><strong>3가지 평가:</strong> 어휘합격, 소리훈련 합격, 문법숙제 완료</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #722ed1;">💡 사용 팁</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>30초마다 자동으로 데이터가 저장됩니다</li>
+                            <li>반별로 다른 UI가 자동으로 적용됩니다</li>
+                            <li>체크박스 방식으로 간편하게 평가 결과를 입력하세요</li>
+                            <li>복사 기능으로 학부모나 학생에게 숙제를 쉽게 전달하세요</li>
+                            <li>특별반과 일반반의 출력 형식이 자동으로 구분됩니다</li>
+                        </ul>
+                    </div>
+                    
+                    <button onclick="closeSystemGuide()" style="width: 100%; padding: 12px; background: #1890ff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 20px;">
+                        ✅ 확인
+                    </button>
+                </div>
+            `;
+            
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeSystemGuide();
+                }
+            };
+            
+            document.body.appendChild(modal);
+            window.currentGuideModal = modal;
+        }
+
+        function closeSystemGuide() {
+            if (window.currentGuideModal) {
+                document.body.removeChild(window.currentGuideModal);
+                window.currentGuideModal = null;
+            }
+        }
+
+        // 데이터 백업 기능
+        function backupData() {
+            const backupData = {
+                homeworkData: homeworkData,
+                studentProgress: studentProgress,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `homework_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('데이터 백업이 완료되었습니다!', 'success');
+        }
+
+        // 데이터 복구 기능
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    // 백업 데이터 유효성 검사
+                    if (!backupData.homeworkData || !backupData.studentProgress) {
+                        showNotification('잘못된 백업 파일입니다.', 'error');
+                        return;
+                    }
+                    
+                    // 확인 대화상자
+                    if (confirm('기존 데이터를 백업 데이터로 덮어쓰시겠습니까?\n\n백업 날짜: ' + new Date(backupData.exportDate).toLocaleString('ko-KR'))) {
+                        homeworkData = backupData.homeworkData;
+                        studentProgress = backupData.studentProgress;
+                        
+                        saveHomeworkData();
+                        saveStudentProgress();
+                        
+                        renderStudents();
+                        updateStats();
+                        
+                        showNotification('데이터가 성공적으로 복구되었습니다!', 'success');
+                    }
+                } catch (error) {
+                    console.error('복구 실패:', error);
+                    showNotification('데이터 복구에 실패했습니다.', 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // 파일 입력 초기화
+            event.target.value = '';
+        }
+
+        // 데이터 초기화 기능 (선택사항)
+        function clearAllData() {
+            if (confirm('⚠️ 경고: 모든 데이터가 삭제됩니다.\n\n계속하시겠습니까?')) {
+                if (confirm('정말로 모든 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!')) {
+                    localStorage.removeItem('homework-data');
+                    localStorage.removeItem('student-progress');
+                    homeworkData = {};
+                    studentProgress = {};
+                    renderStudents();
+                    updateStats();
+                    showNotification('모든 데이터가 삭제되었습니다.', 'success');
+                }
+            }
+        }
+
+        // 학생 관리 기능
+        function showStudentManagement() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 1000; display: flex; 
+                align-items: center; justify-content: center; overflow-y: auto;
+            `;
+            
+            const studentsList = studentsData.map(s => `
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${s.id}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${s.name}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${s.class}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${s.school}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${s.grade}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">
+                        <button onclick="editStudent(${s.id})" style="padding: 4px 8px; margin: 0 2px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">✏️ 수정</button>
+                        <button onclick="deleteStudent(${s.id})" style="padding: 4px 8px; margin: 0 2px; background: #f5222d; color: white; border: none; border-radius: 4px; cursor: pointer;">🗑️ 삭제</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 1000px; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation();">
+                    <h2 style="text-align: center; margin-bottom: 20px;">👥 학생 관리</h2>
+                    
+                    <button onclick="showAddStudentForm()" style="width: 100%; padding: 12px; background: #52c41a; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-bottom: 20px;">
+                        ➕ 새 학생 추가
+                    </button>
+                    
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr style="background: #f0f0f0;">
+                                    <th style="padding: 10px; border: 1px solid #ddd;">ID</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">이름</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">반</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">학교</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">학년</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">작업</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${studentsList}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button onclick="closeStudentManagement()" style="width: 100%; padding: 12px; background: #d9d9d9; color: black; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                        ✖️ 닫기
+                    </button>
+                </div>
+            `;
+            
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeStudentManagement();
+                }
+            };
+            
+            document.body.appendChild(modal);
+            window.currentStudentModal = modal;
+        }
+
+        function closeStudentManagement() {
+            if (window.currentStudentModal) {
+                document.body.removeChild(window.currentStudentModal);
+                window.currentStudentModal = null;
+            }
+        }
+
+        function showAddStudentForm() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 1001; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            const newId = Math.max(...studentsData.map(s => s.id)) + 1;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; width: 500px; max-width: 90%;" onclick="event.stopPropagation();">
+                    <h3 style="margin-bottom: 20px;">➕ 새 학생 추가</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">이름 *</label>
+                        <input type="text" id="new-student-name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">반 *</label>
+                        <input type="text" id="new-student-class" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;" placeholder="예: 칼리스토 A">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">학교</label>
+                        <input type="text" id="new-student-school" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">학년</label>
+                        <input type="text" id="new-student-grade" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;" placeholder="예: 초5">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="addStudent(${newId})" style="flex: 1; padding: 12px; background: #52c41a; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            ✅ 추가
+                        </button>
+                        <button onclick="closeAddStudentForm()" style="flex: 1; padding: 12px; background: #d9d9d9; color: black; border: none; border-radius: 8px; cursor: pointer;">
+                            ✖️ 취소
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeAddStudentForm();
+                }
+            };
+            
+            document.body.appendChild(modal);
+            window.currentAddModal = modal;
+        }
+
+        function closeAddStudentForm() {
+            if (window.currentAddModal) {
+                document.body.removeChild(window.currentAddModal);
+                window.currentAddModal = null;
+            }
+        }
+
+        function addStudent(id) {
+            const name = document.getElementById('new-student-name').value.trim();
+            const className = document.getElementById('new-student-class').value.trim();
+            const school = document.getElementById('new-student-school').value.trim();
+            const grade = document.getElementById('new-student-grade').value.trim();
+            
+            if (!name || !className) {
+                alert('이름과 반은 필수 항목입니다.');
+                return;
+            }
+            
+            studentsData.push({ id, name, class: className, school, grade });
+            saveStudentsData();
+            
+            closeAddStudentForm();
+            closeStudentManagement();
+            
+            renderStudents();
+            populateClassFilter();
+            populateBulkOptions();
+            updateStats();
+            
+            showNotification(`${name} 학생이 추가되었습니다!`, 'success');
+        }
+
+        function editStudent(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            if (!student) return;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 1001; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; width: 500px; max-width: 90%;" onclick="event.stopPropagation();">
+                    <h3 style="margin-bottom: 20px;">✏️ 학생 정보 수정</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">이름 *</label>
+                        <input type="text" id="edit-student-name" value="${student.name}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">반 *</label>
+                        <input type="text" id="edit-student-class" value="${student.class}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">학교</label>
+                        <input type="text" id="edit-student-school" value="${student.school}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">학년</label>
+                        <input type="text" id="edit-student-grade" value="${student.grade}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="saveEditStudent(${studentId})" style="flex: 1; padding: 12px; background: #1890ff; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            ✅ 저장
+                        </button>
+                        <button onclick="closeEditStudentForm()" style="flex: 1; padding: 12px; background: #d9d9d9; color: black; border: none; border-radius: 8px; cursor: pointer;">
+                            ✖️ 취소
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    closeEditStudentForm();
+                }
+            };
+            
+            document.body.appendChild(modal);
+            window.currentEditModal = modal;
+        }
+
+        function closeEditStudentForm() {
+            if (window.currentEditModal) {
+                document.body.removeChild(window.currentEditModal);
+                window.currentEditModal = null;
+            }
+        }
+
+        function saveEditStudent(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            if (!student) return;
+            
+            const name = document.getElementById('edit-student-name').value.trim();
+            const className = document.getElementById('edit-student-class').value.trim();
+            const school = document.getElementById('edit-student-school').value.trim();
+            const grade = document.getElementById('edit-student-grade').value.trim();
+            
+            if (!name || !className) {
+                alert('이름과 반은 필수 항목입니다.');
+                return;
+            }
+            
+            student.name = name;
+            student.class = className;
+            student.school = school;
+            student.grade = grade;
+            
+            saveStudentsData();
+            
+            closeEditStudentForm();
+            closeStudentManagement();
+            
+            renderStudents();
+            populateClassFilter();
+            populateBulkOptions();
+            updateStats();
+            
+            showNotification(`${name} 학생 정보가 수정되었습니다!`, 'success');
+        }
+
+        function deleteStudent(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            if (!student) return;
+            
+            if (confirm(`${student.name} 학생을 삭제하시겠습니까?\n\n삭제한 학생의 숙제 데이터도 함께 삭제됩니다.`)) {
+                studentsData = studentsData.filter(s => s.id !== studentId);
+                saveStudentsData();
+                
+                closeStudentManagement();
+                
+                renderStudents();
+                populateClassFilter();
+                populateBulkOptions();
+                updateStats();
+                
+                showNotification(`${student.name} 학생이 삭제되었습니다.`, 'success');
+            }
+        }
+
+        function saveStudentsData() {
+            try {
+                localStorage.setItem('students-data', JSON.stringify(studentsData));
+            } catch (error) {
+                console.error('학생 데이터 저장 실패:', error);
+            }
+        }
+
+        function loadStudentsData() {
+            try {
+                const savedData = localStorage.getItem('students-data');
+                if (savedData) {
+                    studentsData = JSON.parse(savedData);
+                }
+            } catch (error) {
+                console.error('학생 데이터 로드 실패:', error);
+            }
+        }
+        // 부모님 피드백 생성 시스템
+        function generateParentFeedback(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const homework = getHomeworkForStudent(studentId);
+            const progress = getStudentProgress(studentId);
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const isSpecialClass = specialClasses.includes(student.class);
+
+            // 현재 날짜 포맷팅
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+
+            let feedback = `📚 ${student.name} 학생 오늘의 학습 결과 (${dateStr})\n\n`;
+            feedback += `안녕하세요, ${student.name} 학생의 학부모님! 오늘 ${student.name} 학생의 수업 참여와 과제 수행 결과를 말씀드립니다.\n\n`;
+
+            // 기본 정보
+            feedback += `👤 학생 정보\n`;
+            feedback += `• 이름: ${student.name}\n`;
+            feedback += `• 학교: ${student.school}\n`;
+            feedback += `• 학년: ${student.grade}\n`;
+            feedback += `• 반: ${student.class}\n\n`;
+
+            // 학습 활동별 피드백
+            feedback += `📝 오늘의 학습 활동\n`;
+
+            if (isSpecialClass) {
+                // 특별반 피드백
+                if (homework.vocabularyTest) {
+                    const passStatus = homework.vocabularyPass ? '✅ 합격' : '❌ 미달';
+                    feedback += `• 어휘시험: ${homework.vocabularyTest} (${passStatus})\n`;
+                    if (!homework.vocabularyPass) {
+                        feedback += `  → 추가 학습이 필요합니다. 복습을 통해 실력을 키워보세요.\n`;
+                    }
+                }
+
+                if (homework.phonics) {
+                    const passStatus = homework.phonicsPass ? '✅ 합격' : '❌ 미달';
+                    feedback += `• 소리 훈련: ${homework.phonics} (${passStatus})\n`;
+                    if (homework.phonicsProgress) {
+                        feedback += `  → 다음 진도: ${homework.phonicsProgress}\n`;
+                    }
+                    if (!homework.phonicsPass) {
+                        feedback += `  → 발음 연습을 더 하시길 권합니다.\n`;
+                    }
+                }
+
+                if (homework.reading) {
+                    feedback += `• 원서 수업: ${homework.reading}\n`;
+                    feedback += `  → 독서를 통해 어휘력과 독해력이 향상되고 있습니다.\n`;
+                }
+
+                if (homework.grammar) {
+                    const completeStatus = homework.grammarComplete ? '✅ 완료' : '❌ 미완료';
+                    feedback += `• 문법 학습: ${homework.grammar} (${completeStatus})\n`;
+                    if (!homework.grammarComplete) {
+                        feedback += `  → 문법 숙제를 완료해주시기 바랍니다.\n`;
+                    }
+                }
+
+                // 퀴즐릿 관련
+                if (homework.quizletEnabled && homework.quizletUrl) {
+                    const quizletStatus = homework.quizletPass ? '✅ 합격' : '❌ 미달';
+                    feedback += `• 퀴즐릿 학습: 활성화됨 (${quizletStatus})\n`;
+                    feedback += `  → 링크: ${homework.quizletUrl}\n`;
+                    if (!homework.quizletPass) {
+                        feedback += `  → 퀴즐릿을 통한 추가 복습이 필요합니다.\n`;
+                    }
+                }
+            } else {
+                // 일반반 피드백
+                if (homework.vocabulary) {
+                    feedback += `• 어휘 학습: ${homework.vocabulary}\n`;
+                }
+
+                if (homework.phonics) {
+                    feedback += `• 소리 훈련: ${homework.phonics}\n`;
+                }
+
+                if (homework.reading) {
+                    feedback += `• 독서/원서: ${homework.reading}\n`;
+                }
+
+                if (homework.other) {
+                    feedback += `• 기타 활동: ${homework.other}\n`;
+                }
+            }
+
+            // 진도 정보
+            if (progress && progress.vocabulary) {
+                feedback += `\n📊 현재 진도\n`;
+                feedback += `• 어휘 진도: Unit ${progress.vocabulary.currentUnit} - Stage ${progress.vocabulary.currentStage}\n`;
+            }
+
+            // 종합 평가 및 권장사항
+            feedback += `\n🎯 종합 평가 및 권장사항\n`;
+
+            let completedTasks = 0;
+            let totalTasks = 0;
+
+            if (isSpecialClass) {
+                if (homework.vocabularyTest) { totalTasks++; if (homework.vocabularyPass) completedTasks++; }
+                if (homework.phonics) { totalTasks++; if (homework.phonicsPass) completedTasks++; }
+                if (homework.reading) { totalTasks++; completedTasks++; }
+                if (homework.grammar) { totalTasks++; if (homework.grammarComplete) completedTasks++; }
+                if (homework.quizletEnabled) { totalTasks++; if (homework.quizletPass) completedTasks++; }
+            } else {
+                if (homework.vocabulary) { totalTasks++; completedTasks++; }
+                if (homework.phonics) { totalTasks++; completedTasks++; }
+                if (homework.reading) { totalTasks++; completedTasks++; }
+                if (homework.other) { totalTasks++; completedTasks++; }
+            }
+
+            const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 100;
+
+            if (completionRate >= 90) {
+                feedback += `• 🌟 우수: 오늘 모든 학습 활동을 훌륭하게 수행했습니다! (${completionRate}%)\n`;
+                feedback += `• 이 조조로 꾸준히 학습하면 실력이 크게 향상될 것입니다.\n`;
+            } else if (completionRate >= 70) {
+                feedback += `• 👍 양호: 대부분의 학습 활동을 잘 수행했습니다. (${completionRate}%)\n`;
+                feedback += `• 조금 더 집중하여 완성도를 높여보세요.\n`;
+            } else {
+                feedback += `• 📢 관심필요: 학습 참여도가 아쉽습니다. (${completionRate}%)\n`;
+                feedback += `• 선생님과 상담을 통해 학습 방법을 점검해보시기 바랍니다.\n`;
+            }
+
+            // 개인별 피드백이 있으면 추가
+            if (homework.feedback && homework.feedback.trim()) {
+                feedback += `\n💬 선생님 개별 피드백\n`;
+                feedback += `${homework.feedback}\n`;
+            }
+
+            feedback += `\n📞 문의사항이 있으시면 언제든지 연락주세요.\n`;
+            feedback += `감사합니다. 😊\n`;
+
+            return feedback;
+        }
+
+        // 부모님 피드백 표시 모달
+        function showParentFeedback(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const feedback = generateParentFeedback(studentId);
+
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); z-index: 1000; display: flex;
+                align-items: center; justify-content: center; padding: 20px;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 8px; padding: 20px; max-width: 600px;
+                           width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1890ff;">📨 ${student.name} 학생 부모님 피드백</h3>
+                        <button onclick="closeParentFeedbackModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">✖️</button>
+                    </div>
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 6px; margin-bottom: 20px; white-space: pre-line; font-family: monospace; font-size: 13px; line-height: 1.6;">${feedback}</div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="copyParentFeedback('${studentId}')" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            📋 클립보드 복사
+                        </button>
+                        <button onclick="finalizeStudent('${studentId}')" style="padding: 8px 16px; background: #52c41a; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            ✅ 최종 완료
+                        </button>
+                        <button onclick="closeParentFeedbackModal()" style="padding: 8px 16px; background: #d9d9d9; color: #666; border: none; border-radius: 4px; cursor: pointer;">
+                            닫기
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            window.currentParentFeedbackModal = modal;
+        }
+
+        // 부모님 피드백 클립보드 복사
+        function copyParentFeedback(studentId) {
+            const feedback = generateParentFeedback(studentId);
+            const student = studentsData.find(s => s.id === studentId);
+
+            navigator.clipboard.writeText(feedback).then(() => {
+                showNotification(`${student.name} 학생의 부모님 피드백이 클립보드에 복사되었습니다!`, 'success');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                showNotification('복사에 실패했습니다.', 'error');
+            });
+        }
+
+        // 부모님 피드백 모달 닫기
+        function closeParentFeedbackModal() {
+            if (window.currentParentFeedbackModal) {
+                document.body.removeChild(window.currentParentFeedbackModal);
+                window.currentParentFeedbackModal = null;
+            }
+        }
+
+        // 학생 최종 완료 처리
+        function finalizeStudent(studentId) {
+            const student = studentsData.find(s => s.id === studentId);
+            const homework = getHomeworkForStudent(studentId);
+
+            // 최종 완료 표시 추가
+            homework.finalized = true;
+            homework.finalizedAt = new Date().toISOString();
+
+            // 데이터 저장
+            saveHomeworkData();
+
+            // UI 업데이트
+            renderStudents();
+
+                        -->
+</body>
+</body>
+</html>
