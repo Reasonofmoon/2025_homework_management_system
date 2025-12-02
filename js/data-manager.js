@@ -996,21 +996,6 @@ class DataManager {
 
     loadFromStorage() {
         try {
-            const savedHomeworkData = localStorage.getItem('homeworkData');
-            if (savedHomeworkData) {
-                this.homeworkData = JSON.parse(savedHomeworkData);
-            }
-
-            homeworkData: this.homeworkData,
-            studentProgress: this.studentProgress,
-            exportDate: new Date().toISOString()
-        };
-    }
-
-    importBackupData(backupData) {
-        if (!backupData.studentsData || !backupData.homeworkData || !backupData.studentProgress) {
-            throw new Error('잘못된 백업 데이터입니다.');
-        }
 
         this.studentsData = backupData.studentsData;
         this.homeworkData = backupData.homeworkData;
