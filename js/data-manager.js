@@ -5,7 +5,414 @@
 
 class DataManager {
     constructor() {
-        this.studentsData = [];
+        this.studentsData = [
+    {
+        "id": 1,
+        "class": "NewMoon A",
+        "name": "문모아",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 2,
+        "class": "NewMoon A",
+        "name": "이하람",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 3,
+        "class": "NewMoon A",
+        "name": "황지욱",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 4,
+        "class": "가나메데 A",
+        "name": "김석준",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 5,
+        "class": "가나메데 A",
+        "name": "김승준",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 6,
+        "class": "가나메데 A",
+        "name": "신아민",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 7,
+        "class": "가나메데 A",
+        "name": "오예원",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 8,
+        "class": "유로파 A",
+        "name": "김예지",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 9,
+        "class": "유로파 A",
+        "name": "김정우",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 10,
+        "class": "유로파 A",
+        "name": "김한울",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 11,
+        "class": "유로파 A",
+        "name": "신현호",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 12,
+        "class": "유로파 A",
+        "name": "정희준",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 13,
+        "class": "유로파 A",
+        "name": "조유주",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 14,
+        "class": "유로파 A",
+        "name": "정지연",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 15,
+        "class": "칼리스토 A",
+        "name": "김윤아",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 16,
+        "class": "칼리스토 A",
+        "name": "신유주",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 17,
+        "class": "칼리스토 A",
+        "name": "이도후",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 18,
+        "class": "칼리스토 A",
+        "name": "전주형",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 19,
+        "class": "칼리스토 A",
+        "name": "김시은",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 20,
+        "class": "칼리스토 A",
+        "name": "김지우",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 21,
+        "class": "칼리스토 B",
+        "name": "강현서",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 22,
+        "class": "칼리스토 B",
+        "name": "서보민",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 23,
+        "class": "칼리스토 B",
+        "name": "신백경",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 24,
+        "class": "칼리스토 B",
+        "name": "정세진",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 25,
+        "class": "칼리스토 C",
+        "name": "구도윤",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 26,
+        "class": "칼리스토 C",
+        "name": "신시현",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 27,
+        "class": "칼리스토 C",
+        "name": "최유",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 28,
+        "class": "칼리스토 C",
+        "name": "조은서",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 29,
+        "class": "크레센트 A",
+        "name": "구하나",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 30,
+        "class": "크레센트 A",
+        "name": "김보겸",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 31,
+        "class": "크레센트 A",
+        "name": "김시원",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 32,
+        "class": "크레센트 A",
+        "name": "김은유",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 33,
+        "class": "크레센트 A",
+        "name": "문아늘",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 34,
+        "class": "크레센트 A",
+        "name": "백서준",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 35,
+        "class": "크레센트 A",
+        "name": "전제이",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 36,
+        "class": "크레센트 A",
+        "name": "최준명",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 37,
+        "class": "크레센트 B",
+        "name": "김리안",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 38,
+        "class": "크레센트 B",
+        "name": "양지후",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 39,
+        "class": "크레센트 B",
+        "name": "이지한",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 40,
+        "class": "크레센트 B",
+        "name": "이지훈",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 41,
+        "class": "크레센트 B",
+        "name": "정채린",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 42,
+        "class": "크레센트 B",
+        "name": "이시원",
+        "school": "안양초",
+        "grade": "초5"
+    },
+    {
+        "id": 43,
+        "class": "크레센트 C",
+        "name": "문가온",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 44,
+        "class": "크레센트 C",
+        "name": "박유주",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 45,
+        "class": "크레센트 C",
+        "name": "서여율",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 46,
+        "class": "크레센트 C",
+        "name": "양승유",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 47,
+        "class": "크레센트 C",
+        "name": "이승준",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 48,
+        "class": "타이탄 A",
+        "name": "정유민",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 49,
+        "class": "타이탄 A",
+        "name": "김정민",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 50,
+        "class": "타이탄 A",
+        "name": "신민경",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 51,
+        "class": "타이탄 A",
+        "name": "전설우",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 52,
+        "class": "타이탄 B",
+        "name": "강현우",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 53,
+        "class": "타이탄 B",
+        "name": "경서현",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 54,
+        "class": "타이탄 B",
+        "name": "박가온",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 55,
+        "class": "타이탄 B",
+        "name": "오서한",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 56,
+        "class": "타이탄 B",
+        "name": "정혜원",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 57,
+        "class": "타이탄 B",
+        "name": "조하람",
+        "school": "",
+        "grade": ""
+    },
+    {
+        "id": 58,
+        "class": "타이탄 B",
+        "name": "최서준",
+        "school": "",
+        "grade": ""
+    }
+];
         this.homeworkData = {};
         this.studentProgress = {};
         this.currentDate = '';
