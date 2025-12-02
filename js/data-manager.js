@@ -1001,23 +1001,6 @@ class DataManager {
                 this.homeworkData = JSON.parse(savedHomeworkData);
             }
 
-            const savedProgressData = localStorage.getItem('studentProgress');
-            if (savedProgressData) {
-                this.studentProgress = JSON.parse(savedProgressData);
-            }
-
-            // const savedStudentsData = localStorage.getItem('studentsData');
-            // if (savedStudentsData) {
-            //     this.studentsData = JSON.parse(savedStudentsData);
-            // }
-        } catch (error) {
-            console.error('데이터 로드 실패:', error);
-        }
-    }
-
-    exportBackupData() {
-        return {
-            studentsData: this.studentsData,
             homeworkData: this.homeworkData,
             studentProgress: this.studentProgress,
             exportDate: new Date().toISOString()
