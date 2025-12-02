@@ -1006,16 +1006,15 @@ class DataManager {
                 this.studentProgress = JSON.parse(savedProgressData);
             }
 
-            const savedStudentsData = localStorage.getItem('studentsData');
-            if (savedStudentsData) {
-                this.studentsData = JSON.parse(savedStudentsData);
-            }
+            // const savedStudentsData = localStorage.getItem('studentsData');
+            // if (savedStudentsData) {
+            //     this.studentsData = JSON.parse(savedStudentsData);
+            // }
         } catch (error) {
             console.error('데이터 로드 실패:', error);
         }
     }
 
-    // 데이터 백업 및 복구
     exportBackupData() {
         return {
             studentsData: this.studentsData,
