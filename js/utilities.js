@@ -20,7 +20,7 @@ class Utilities {
         this.dataManager.studentsData.forEach(student => {
             const homework = data[student.id] || {};
             const progress = this.dataManager.getStudentProgress(student.id);
-            const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
             const isSpecialClass = specialClasses.includes(student.class);
 
             const row = [
@@ -28,8 +28,8 @@ class Utilities {
                 student.name,
                 student.school,
                 student.grade,
-                isSpecialClass ? (homework.vocabularyTest || '') : (homework.vocabulary || ''),
-                homework.phonics || '',
+                isSpecialClass ? (homework.vocabularyTest || '') : (this.dataManager.formatVocabularyText(homework.vocabulary) || ''),
+                this.dataManager.formatPhonicsText(homework.phonics) || '',
                 homework.phonicsProgress || '',
                 homework.reading || '',
                 homework.quizletEnabled ? '활성화' : '비활성화',
@@ -65,7 +65,7 @@ class Utilities {
 
         Object.keys(classData).forEach((className, classIndex) => {
             const students = classData[className];
-            const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
             const isSpecialClass = specialClasses.includes(className);
 
             allHomeworkText += `=== ${className} (${students.length}명) ===\n`;
@@ -77,7 +77,7 @@ class Utilities {
 
                 if (isSpecialClass) {
                     allHomeworkText += `   📝 어휘시험: ${homework.vocabularyTest || '없음'}\n`;
-                    allHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                    allHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
                     if (homework.phonicsProgress) {
                         allHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
                     }
@@ -88,8 +88,8 @@ class Utilities {
                     allHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
                     allHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
                 } else {
-                    allHomeworkText += `   📝 어휘: ${homework.vocabulary || '없음'}\n`;
-                    allHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                    allHomeworkText += `   📝 어휘: ${this.dataManager.formatVocabularyText(homework.vocabulary) || '없음'}\n`;
+                    allHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
                     allHomeworkText += `   📚 독서: ${homework.reading || '없음'}\n`;
                     allHomeworkText += `   📋 기타: ${homework.other || '없음'}\n`;
                 }
@@ -148,7 +148,7 @@ class Utilities {
         }
 
         const studentsInClass = this.dataManager.studentsData.filter(student => student.class === selectedClass);
-        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(selectedClass);
 
         let classHomeworkText = `📚 ${selectedClass} 숙제 내역 - ${this.dataManager.currentDate}\n\n`;
@@ -160,7 +160,7 @@ class Utilities {
 
             if (isSpecialClass) {
                 classHomeworkText += `   📝 어휘시험: ${homework.vocabularyTest || '없음'}\n`;
-                classHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                classHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
                 if (homework.phonicsProgress) {
                     classHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
                 }
@@ -171,8 +171,8 @@ class Utilities {
                 classHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
                 classHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
             } else {
-                classHomeworkText += `   📝 어휘: ${homework.vocabulary || '없음'}\n`;
-                classHomeworkText += `   🔤 소리: ${homework.phonics || '없음'}\n`;
+                classHomeworkText += `   📝 어휘: ${this.dataManager.formatVocabularyText(homework.vocabulary) || '없음'}\n`;
+                classHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
                 classHomeworkText += `   📚 독서: ${homework.reading || '없음'}\n`;
                 classHomeworkText += `   📋 기타: ${homework.other || '없음'}\n`;
             }

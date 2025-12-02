@@ -808,6 +808,78 @@
     }
 ];
 
+        const vocabularyOptions = [];
+        for (let unit = 1; unit <= 40; unit++) {
+            const baseNumber = (unit - 1) * 100;
+            
+            // 1차 - 플래시카드
+            vocabularyOptions.push({
+                value: `unit${unit}_stage1_flashcard1`,
+                text: `Unit ${unit} - 1차 플래시카드 (${baseNumber + 1}-${baseNumber + 50})`
+            });
+            vocabularyOptions.push({
+                value: `unit${unit}_stage1_flashcard2`,
+                text: `Unit ${unit} - 1차 플래시카드 (${baseNumber + 51}-${baseNumber + 100})`
+            });
+            
+            // 2차 - 의미시험
+            vocabularyOptions.push({
+                value: `unit${unit}_stage2_meaning1`,
+                text: `Unit ${unit} - 2차 의미시험 (${baseNumber + 1}-${baseNumber + 50})`
+            });
+            vocabularyOptions.push({
+                value: `unit${unit}_stage2_meaning2`,
+                text: `Unit ${unit} - 2차 의미시험 (${baseNumber + 51}-${baseNumber + 100})`
+            });
+            
+            // 3차 - 스펠링시험
+            for (let part = 1; part <= 4; part++) {
+                const startNum = baseNumber + (part - 1) * 25 + 1;
+                const endNum = baseNumber + part * 25;
+                vocabularyOptions.push({
+                    value: `unit${unit}_stage3_spelling${part}`,
+                    text: `Unit ${unit} - 3차 스펠링시험 (${startNum}-${endNum})`
+                });
+            }
+        }
+
+        const phonicsOptions = [
+            { value: 'cory_best_friend', text: '[Cory Carson] Chrissey\'s Best Friend' },
+            { value: 'charlie_pancake', text: '[Charlie\'s Colorforms City] Charlie\'s Pancake Chef' },
+            { value: 'chip_morning', text: '[Chip and Potato] Morning Potato' },
+            { value: 'spirit_thunder', text: '[Spirit Rangers] Thunder Mountain' },
+            { value: 'cory_first_day', text: '[Cory Carson] Cory\'s First Day' },
+            { value: 'clifford_get_well', text: '[Clifford] Get Well' },
+            { value: 'clifford_mimi', text: '[Clifford] Mimi\'s Back In Town' },
+            { value: 'clifford_dog_day', text: '[Clifford] Dog for a Day' },
+            { value: 'clifford_mess', text: '[Clifford] Another Fine Mess' },
+            { value: 'arthur_mr_rogers', text: '[Arthur] Arthur Meets Mr. Rogers' },
+            { value: 'arthur_water_brain', text: '[Arthur] Water and the Brain' },
+            { value: 'arthur_draw', text: '[Arthur] Draw' },
+            { value: 'arthur_binky', text: '[Arthur] Binky Art Expert' },
+            { value: 'charlie_brown_dog', text: '[Charlie Brown] He\'s Your Dog' },
+            { value: 'charlie_brown_lucy', text: '[Charlie Brown] Lucy Must Be Traded' },
+            { value: 'charlie_brown_happiness', text: '[Charlie Brown] Happiness Is a ...' },
+            { value: 'hollow_season1', text: '[The Hollow] Season 1' },
+            { value: 'talking_tom_audition', text: '[Talking Tom] The Audition' },
+            { value: 'untalking_tom', text: '[UnTalking Tom] UnTalking Tom' },
+            { value: 'bare_bears_stuff', text: '[We Bare Bears] Our Stuff' },
+            { value: 'news_basic1', text: '[News] Basic 1' },
+            { value: 'news_advanced', text: '[News] Advanced' }
+        ];
+
+        function formatVocabularyText(value) {
+            if (!value) return '';
+            const option = vocabularyOptions.find(opt => opt.value === value);
+            return option ? option.text : value;
+        }
+
+        function formatPhonicsText(value) {
+            if (!value) return '';
+            const option = phonicsOptions.find(opt => opt.value === value);
+            return option ? option.text : value;
+        }
+
         let apiConfig = {
             provider: 'openai',
             apiKey: '',
@@ -1001,7 +1073,7 @@
                 concise: '간결하고 핵심적인 톤으로, 중요한 포인트만 요약'
             };
 
-            const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
             const isSpecialClass = specialClasses.includes(student.class);
 
             let prompt = `당신은 영어 교육 전문가이자 학부모 상담 전문가입니다. 다음 학생의 학습 현황을 바탕으로 학부모님께 전달할 피드백을 작성해주세요.
@@ -1018,7 +1090,7 @@
                 prompt += `
 - 어휘시험: ${homework.vocabularyTest || '없음'}
 - 어휘합격 여부: ${homework.vocabularyPass ? '합격' : '불합격'}
-- 소리훈련: ${homework.phonics || '없음'}
+- 소리훈련: ${formatPhonicsText(homework.phonics) || '없음'}
 - 소리훈련 합격 여부: ${homework.phonicsPass ? '합격' : '불합격'}
 - 원서수업: ${homework.reading || '없음'}
 - 문법 숙제: ${homework.grammar || '없음'}
@@ -1026,9 +1098,9 @@
 - 퀴즐릿 합격 여부: ${homework.quizletPass ? '합격' : '불합격'}`;
             } else {
                 prompt += `
-- 어휘 (입체어휘 4000): ${homework.vocabulary || '없음'}
+- 어휘 (입체어휘 4000): ${formatVocabularyText(homework.vocabulary) || '없음'}
 - 어휘 합격 여부: ${homework.vocabularyPass ? '합격' : '불합격'}
-- 소리훈련: ${homework.phonics || '없음'}
+- 소리훈련: ${formatPhonicsText(homework.phonics) || '없음'}
 - 소리훈련 합격 여부: ${homework.phonicsPass ? '합격' : '불합격'}
 - 독서: ${homework.reading || '없음'}
 - 퀴즐릿 학습: ${homework.quizletEnabled ? '활성화' : '비활성화'}

@@ -14,7 +14,7 @@ class FeedbackManager {
         const student = this.dataManager.studentsData.find(s => s.id === studentId);
         const homework = this.dataManager.getHomeworkForStudent(studentId);
         const progress = this.dataManager.getStudentProgress(studentId);
-        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(student.class);
 
         // 현재 날짜 포맷팅
@@ -79,7 +79,8 @@ class FeedbackManager {
 
         if (homework.phonics) {
             const passStatus = homework.phonicsPass ? '✅ 합격' : '❌ 미달';
-            feedback += `• 소리 훈련: ${homework.phonics} (${passStatus})\n`;
+            const phonicsText = this.dataManager.formatPhonicsText(homework.phonics) || homework.phonics;
+            feedback += `• 소리 훈련: ${phonicsText} (${passStatus})\n`;
             if (homework.phonicsProgress) {
                 feedback += `  → 다음 진도: ${homework.phonicsProgress}\n`;
             }
@@ -118,11 +119,13 @@ class FeedbackManager {
         let feedback = '';
 
         if (homework.vocabulary) {
-            feedback += `• 어휘 학습: ${homework.vocabulary}\n`;
+            const vocabText = this.dataManager.formatVocabularyText(homework.vocabulary) || homework.vocabulary;
+            feedback += `• 어휘 학습: ${vocabText}\n`;
         }
 
         if (homework.phonics) {
-            feedback += `• 소리 훈련: ${homework.phonics}\n`;
+            const phonicsText = this.dataManager.formatPhonicsText(homework.phonics) || homework.phonics;
+            feedback += `• 소리 훈련: ${phonicsText}\n`;
         }
 
         if (homework.reading) {

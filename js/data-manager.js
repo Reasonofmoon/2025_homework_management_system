@@ -428,6 +428,7 @@ class DataManager {
         }
         
         // 현재 날짜 설정
+        this.initializeOptions();
         this.currentDate = this.getCurrentDate();
 
         // 로컬 저장소에서 데이터 로드
@@ -435,6 +436,110 @@ class DataManager {
 
         // 학생별 기본 진도 초기화
         this.initializeStudentProgress();
+    }
+
+    initializeOptions() {
+        // 입체어휘 4000 단어 시스템
+        this.vocabularyOptions = [];
+        for (let unit = 1; unit <= 40; unit++) {
+            const baseNumber = (unit - 1) * 100;
+            
+            // 1차 - 플래시카드 (1-50, 51-100)
+            this.vocabularyOptions.push({
+                value: `unit${unit}_stage1_flashcard1`,
+                text: `Unit ${unit} - 1차 플래시카드 (${baseNumber + 1}-${baseNumber + 50})`,
+                unit: unit,
+                stage: 1,
+                type: 'flashcard',
+                part: 1
+            });
+            this.vocabularyOptions.push({
+                value: `unit${unit}_stage1_flashcard2`,
+                text: `Unit ${unit} - 1차 플래시카드 (${baseNumber + 51}-${baseNumber + 100})`,
+                unit: unit,
+                stage: 1,
+                type: 'flashcard',
+                part: 2
+            });
+            
+            // 2차 - 의미시험 (1-50, 51-100)
+            this.vocabularyOptions.push({
+                value: `unit${unit}_stage2_meaning1`,
+                text: `Unit ${unit} - 2차 의미시험 (${baseNumber + 1}-${baseNumber + 50})`,
+                unit: unit,
+                stage: 2,
+                type: 'meaning',
+                part: 1
+            });
+            this.vocabularyOptions.push({
+                value: `unit${unit}_stage2_meaning2`,
+                text: `Unit ${unit} - 2차 의미시험 (${baseNumber + 51}-${baseNumber + 100})`,
+                unit: unit,
+                stage: 2,
+                type: 'meaning',
+                part: 2
+            });
+            
+            // 3차 - 스펠링시험 (1-25, 26-50, 51-75, 76-100)
+            for (let part = 1; part <= 4; part++) {
+                const startNum = baseNumber + (part - 1) * 25 + 1;
+                const endNum = baseNumber + part * 25;
+                this.vocabularyOptions.push({
+                    value: `unit${unit}_stage3_spelling${part}`,
+                    text: `Unit ${unit} - 3차 스펠링시험 (${startNum}-${endNum})`,
+                    unit: unit,
+                    stage: 3,
+                    type: 'spelling',
+                    part: part
+                });
+            }
+        }
+
+        // 소리훈련 시스템
+        this.phonicsOptions = [
+            { value: 'cory_best_friend', text: '[Cory Carson] Chrissey\'s Best Friend' },
+            { value: 'charlie_pancake', text: '[Charlie\'s Colorforms City] Charlie\'s Pancake Chef' },
+            { value: 'chip_morning', text: '[Chip and Potato] Morning Potato' },
+            { value: 'spirit_thunder', text: '[Spirit Rangers] Thunder Mountain' },
+            { value: 'cory_first_day', text: '[Cory Carson] Cory\'s First Day' },
+            { value: 'clifford_get_well', text: '[Clifford] Get Well' },
+            { value: 'clifford_mimi', text: '[Clifford] Mimi\'s Back In Town' },
+            { value: 'clifford_dog_day', text: '[Clifford] Dog for a Day' },
+            { value: 'clifford_mess', text: '[Clifford] Another Fine Mess' },
+            { value: 'arthur_mr_rogers', text: '[Arthur] Arthur Meets Mr. Rogers' },
+            { value: 'arthur_water_brain', text: '[Arthur] Water and the Brain' },
+            { value: 'arthur_draw', text: '[Arthur] Draw' },
+            { value: 'arthur_binky', text: '[Arthur] Binky Art Expert' },
+            { value: 'charlie_brown_dog', text: '[Charlie Brown] He\'s Your Dog' },
+            { value: 'charlie_brown_lucy', text: '[Charlie Brown] Lucy Must Be Traded' },
+            { value: 'charlie_brown_happiness', text: '[Charlie Brown] Happiness Is a ...' },
+            { value: 'hollow_season1', text: '[The Hollow] Season 1' },
+            { value: 'talking_tom_audition', text: '[Talking Tom] The Audition' },
+            { value: 'untalking_tom', text: '[UnTalking Tom] UnTalking Tom' },
+            { value: 'bare_bears_stuff', text: '[We Bare Bears] Our Stuff' },
+            { value: 'news_basic1', text: '[News] Basic 1' },
+            { value: 'news_advanced', text: '[News] Advanced' }
+        ];
+    }
+
+    getVocabularyOptions() {
+        return this.vocabularyOptions;
+    }
+
+    getPhonicsOptions() {
+        return this.phonicsOptions;
+    }
+
+    formatVocabularyText(value) {
+        if (!value) return '';
+        const option = this.vocabularyOptions.find(opt => opt.value === value);
+        return option ? option.text : value;
+    }
+
+    formatPhonicsText(value) {
+        if (!value) return '';
+        const option = this.phonicsOptions.find(opt => opt.value === value);
+        return option ? option.text : value;
     }
 
     getCurrentDate() {
@@ -637,7 +742,7 @@ class DataManager {
     getStatistics() {
         const totalStudents = this.studentsData.length;
         let completedHomework = 0;
-        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
 
         this.studentsData.forEach(student => {
             const homework = this.getHomeworkForStudent(student.id);

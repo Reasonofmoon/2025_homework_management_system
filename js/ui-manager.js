@@ -100,20 +100,32 @@ class UIManager {
             bulkHomeworkSelect.innerHTML = '<option value="">숙제 선택</option>';
 
             if (category === 'vocabulary') {
-                const vocabOptions = [
-                    'Unit 1 - 1차', 'Unit 1 - 2차', 'Unit 1 - 3차', 'Unit 1 - 재시험',
-                    'Unit 2 - 1차', 'Unit 2 - 2차', 'Unit 2 - 3차', 'Unit 2 - 재시험',
-                    // ... 더 많은 옵션들
-                ];
-
+                const vocabOptions = this.dataManager.getVocabularyOptions();
                 vocabOptions.forEach(option => {
                     const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    optionElement.textContent = option;
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
                     bulkHomeworkSelect.appendChild(optionElement);
                 });
+            } else if (category === 'phonics') {
+                const phonicsOptions = this.dataManager.getPhonicsOptions();
+                phonicsOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
+                    bulkHomeworkSelect.appendChild(optionElement);
+                });
+            } else if (category === 'quizletEnabled') {
+                const enableOption = document.createElement('option');
+                enableOption.value = 'true';
+                enableOption.textContent = '활성화';
+                bulkHomeworkSelect.appendChild(enableOption);
+                
+                const disableOption = document.createElement('option');
+                disableOption.value = 'false';
+                disableOption.textContent = '비활성화';
+                bulkHomeworkSelect.appendChild(disableOption);
             }
-            // 다른 카테고리들에 대한 처리...
         });
     }
 
@@ -179,7 +191,7 @@ class UIManager {
     createStudentCard(student) {
         const homework = this.dataManager.getHomeworkForStudent(student.id);
         const progress = this.dataManager.getStudentProgress(student.id);
-        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(student.class);
 
         const card = document.createElement('div');
@@ -195,6 +207,9 @@ class UIManager {
     }
 
     createSpecialClassCardContent(student, homework, progress) {
+        const phonicsSection = student.class !== '타이탄 B' ? 
+            this.createHomeworkItem('소리', 'phonics', student.id, homework.phonics, 'select', this.dataManager.getPhonicsOptions()) : '';
+
         return `
             <div class="student-info">
                 <div>
@@ -202,14 +217,11 @@ class UIManager {
                     <div class="student-details">${student.school} ${student.grade}</div>
                     <div class="student-date">📅 ${this.dataManager.currentDate}</div>
                 </div>
-                <div class="progress-indicator">
-                    <div class="progress-text">Unit ${progress.vocabulary.currentUnit}-${progress.vocabulary.currentStage}차</div>
-                </div>
             </div>
 
             <div class="homework-section">
-                ${this.createHomeworkItem('어휘시험', 'vocabularyTest', student.id, homework.vocabularyTest, 'select', ['Unit 1 - 1차', 'Unit 1 - 2차', 'Unit 1 - 3차'])}
-                ${this.createHomeworkItem('소리', 'phonics', student.id, homework.phonics, 'select', ['A단계', 'B단계', 'C단계'])}
+                ${this.createHomeworkItem('어휘시험', 'vocabularyTest', student.id, homework.vocabularyTest, 'input')}
+                ${phonicsSection}
                 ${this.createHomeworkItem('원서수업', 'reading', student.id, homework.reading, 'input')}
                 ${this.createHomeworkItem('문법', 'grammar', student.id, homework.grammar, 'input')}
                 ${this.createQuizletSection(student.id, homework)}
@@ -230,17 +242,20 @@ class UIManager {
                     <div class="student-date">📅 ${this.dataManager.currentDate}</div>
                 </div>
                 <div class="progress-indicator">
-                    <div class="progress-text">Unit ${progress.vocabulary.currentUnit}-${progress.vocabulary.currentStage}차</div>
+                    <div class="progress-text">Unit ${progress.vocabulary?.currentUnit || 1}-${progress.vocabulary?.currentStage || 1}차</div>
                 </div>
             </div>
 
             <div class="homework-section">
-                ${this.createHomeworkItem('어휘', 'vocabulary', student.id, homework.vocabulary, 'input')}
-                ${this.createHomeworkItem('소리', 'phonics', student.id, homework.phonics, 'input')}
+                ${this.createHomeworkItem('어휘 (입체어휘 4000)', 'vocabulary', student.id, homework.vocabulary, 'select', this.dataManager.getVocabularyOptions())}
+                ${this.createHomeworkItem('소리훈련', 'phonics', student.id, homework.phonics, 'select', this.dataManager.getPhonicsOptions())}
                 ${this.createHomeworkItem('독서/원서', 'reading', student.id, homework.reading, 'input')}
                 ${this.createHomeworkItem('기타', 'other', student.id, homework.other, 'input')}
+                ${this.createHomeworkItem('문법', 'grammar', student.id, homework.grammar, 'input')}
+                ${this.createQuizletSection(student.id, homework)}
             </div>
 
+            ${this.createEvaluationSection(student.id, homework)}
             ${this.createFeedbackSection(student.id, homework)}
             ${this.createActionButtons(student.id, homework)}
         `;
@@ -248,9 +263,11 @@ class UIManager {
 
     createHomeworkItem(label, field, studentId, value, type, options = []) {
         if (type === 'select') {
-            const optionsHtml = options.map(option =>
-                `<option value="${option}" ${value === option ? 'selected' : ''}>${option}</option>`
-            ).join('');
+            const optionsHtml = options.map(option => {
+                const optValue = typeof option === 'object' ? option.value : option;
+                const optText = typeof option === 'object' ? option.text : option;
+                return `<option value="${optValue}" ${value === optValue ? 'selected' : ''}>${optText}</option>`;
+            }).join('');
 
             return `
                 <div class="homework-item">
@@ -428,7 +445,7 @@ class UIManager {
     }
 
     formatHomeworkText(student, homework, progress) {
-        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(student.class);
 
         let text = `📚 ${student.name} (${student.school} ${student.grade}) - ${this.dataManager.currentDate}\n\n`;
@@ -440,10 +457,11 @@ class UIManager {
             if (homework.grammar) text += `📖 문법: ${homework.grammar}\n`;
             if (homework.quizletEnabled && homework.quizletUrl) text += `🎯 퀴즐릿: ${homework.quizletUrl}\n`;
         } else {
-            if (homework.vocabulary) text += `📝 어휘: ${homework.vocabulary}\n`;
-            if (homework.phonics) text += `🔤 소리: ${homework.phonics}\n`;
+            if (homework.vocabulary) text += `📝 어휘: ${this.dataManager.formatVocabularyText(homework.vocabulary)}\n`;
+            if (homework.phonics) text += `🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics)}\n`;
             if (homework.reading) text += `📚 독서: ${homework.reading}\n`;
             if (homework.other) text += `📋 기타: ${homework.other}\n`;
+            if (homework.grammar) text += `📖 문법: ${homework.grammar}\n`;
         }
 
         if (homework.feedback) text += `\n💬 피드백: ${homework.feedback}`;
