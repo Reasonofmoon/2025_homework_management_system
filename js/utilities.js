@@ -20,7 +20,7 @@ class Utilities {
         this.dataManager.studentsData.forEach(student => {
             const homework = data[student.id] || {};
             const progress = this.dataManager.getStudentProgress(student.id);
-            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
             const isSpecialClass = specialClasses.includes(student.class);
 
             const row = [
@@ -65,7 +65,7 @@ class Utilities {
 
         Object.keys(classData).forEach((className, classIndex) => {
             const students = classData[className];
-            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+            const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
             const isSpecialClass = specialClasses.includes(className);
 
             allHomeworkText += `=== ${className} (${students.length}명) ===\n`;
@@ -148,7 +148,7 @@ class Utilities {
         }
 
         const studentsInClass = this.dataManager.studentsData.filter(student => student.class === selectedClass);
-        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(selectedClass);
 
         let classHomeworkText = `📚 ${selectedClass} 숙제 내역 - ${this.dataManager.currentDate}\n\n`;
@@ -222,19 +222,6 @@ class Utilities {
                     <ul style="line-height: 1.8;">
                         <li><strong>Ctrl + S:</strong> 전체 데이터 저장</li>
                     </ul>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: #722ed1;">📋 반별 특징</h4>
-                    <ul style="line-height: 1.8;">
-                        <li><strong>특별반 (가니메데, 유로파, 타이탄):</strong> 어휘시험, 소리진도, 원서수업, 문법, 퀴즐릿</li>
-                        <li><strong>일반반 (Halfmoon, Io):</strong> 어휘, 소리, 독서, 기타</li>
-                        <li><strong>3가지 평가:</strong> 어휘합격, 소리훈련 합격, 문법숙제 완료</li>
-                    </ul>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: #13c2c2;">💾 자동 저장</h4>
                     <ul style="line-height: 1.8;">
                         <li>30초마다 자동으로 데이터가 저장됩니다</li>
                         <li>브라우저를 닫아도 데이터가 유지됩니다</li>

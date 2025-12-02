@@ -14,7 +14,7 @@ class FeedbackManager {
         const student = this.dataManager.studentsData.find(s => s.id === studentId);
         const homework = this.dataManager.getHomeworkForStudent(studentId);
         const progress = this.dataManager.getStudentProgress(studentId);
-        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(student.class);
 
         // 현재 날짜 포맷팅

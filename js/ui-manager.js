@@ -179,7 +179,7 @@ class UIManager {
     createStudentCard(student) {
         const homework = this.dataManager.getHomeworkForStudent(student.id);
         const progress = this.dataManager.getStudentProgress(student.id);
-        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(student.class);
 
         const card = document.createElement('div');
@@ -428,7 +428,7 @@ class UIManager {
     }
 
     formatHomeworkText(student, homework, progress) {
-        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+        const specialClasses = ['가나메데 A', '유로파 A', '타이탄 A', '타이탄 B'];
         const isSpecialClass = specialClasses.includes(student.class);
 
         let text = `📚 ${student.name} (${student.school} ${student.grade}) - ${this.dataManager.currentDate}\n\n`;
