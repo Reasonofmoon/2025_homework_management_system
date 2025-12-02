@@ -420,417 +420,13 @@ class DataManager {
     }
 
     initializeData() {
-        // 학생 데이터 초기화
-        this.studentsData = [
-    {
-        "id": 5,
-        "class": "NewMoon A",
-        "name": "문모아",
-        "school": "",
-        "grade": "초1"
-    },
-    {
-        "id": 6,
-        "class": "NewMoon A",
-        "name": "이하람",
-        "school": "",
-        "grade": "초3"
-    },
-    {
-        "id": 7,
-        "class": "NewMoon A",
-        "name": "황지욱",
-        "school": "",
-        "grade": "초2"
-    },
-    {
-        "id": 25,
-        "class": "가나메데 A",
-        "name": "김석준",
-        "school": "안양동초",
-        "grade": "초6"
-    },
-    {
-        "id": 26,
-        "class": "가나메데 A",
-        "name": "김승준",
-        "school": "안양동초",
-        "grade": "초6"
-    },
-    {
-        "id": 28,
-        "class": "가나메데 A",
-        "name": "신아민",
-        "school": "안양동초",
-        "grade": "초6"
-    },
-    {
-        "id": 29,
-        "class": "가나메데 A",
-        "name": "오예원",
-        "school": "중앙초",
-        "grade": "초6"
-    },
-    {
-        "id": 19,
-        "class": "유로파 A",
-        "name": "김예지",
-        "school": "안양외고",
-        "grade": "고1"
-    },
-    {
-        "id": 15,
-        "class": "유로파 A",
-        "name": "김정우",
-        "school": "임곱중",
-        "grade": "중3"
-    },
-    {
-        "id": 20,
-        "class": "유로파 A",
-        "name": "김한울",
-        "school": "임곱중",
-        "grade": "중3"
-    },
-    {
-        "id": 21,
-        "class": "유로파 A",
-        "name": "신현호",
-        "school": "평촌고",
-        "grade": "고1"
-    },
-    {
-        "id": 17,
-        "class": "유로파 A",
-        "name": "정희준",
-        "school": "평촌고",
-        "grade": "고1"
-    },
-    {
-        "id": 18,
-        "class": "유로파 A",
-        "name": "조유주",
-        "school": "임곱중",
-        "grade": "중1"
-    },
-    {
-        "id": 22,
-        "class": "유로파 A",
-        "name": "정지연",
-        "school": "임곱중",
-        "grade": "중3"
-    },
-    {
-        "id": 51,
-        "class": "칼리스토 A",
-        "name": "김윤아",
-        "school": "안양동초",
-        "grade": "초4"
-    },
-    {
-        "id": 54,
-        "class": "칼리스토 A",
-        "name": "신유주",
-        "school": "",
-        "grade": "초4"
-    },
-    {
-        "id": 4,
-        "class": "칼리스토 A",
-        "name": "이도후",
-        "school": "샘모루초",
-        "grade": "초4"
-    },
-    {
-        "id": 1,
-        "class": "칼리스토 A",
-        "name": "전주형",
-        "school": "안일초",
-        "grade": "초4"
-    },
-    {
-        "id": 2,
-        "class": "칼리스토 A",
-        "name": "김시은",
-        "school": "샘모루초",
-        "grade": "초4"
-    },
-    {
-        "id": 3,
-        "class": "칼리스토 A",
-        "name": "김지우",
-        "school": "안양동초",
-        "grade": "초3"
-    },
-    {
-        "id": 31,
-        "class": "칼리스토 B",
-        "name": "강현서",
-        "school": "샘모루초",
-        "grade": "초5"
-    },
-    {
-        "id": 34,
-        "class": "칼리스토 B",
-        "name": "서보민",
-        "school": "샘모루초",
-        "grade": "초5"
-    },
-    {
-        "id": 35,
-        "class": "칼리스토 B",
-        "name": "신백경",
-        "school": "덕천초",
-        "grade": "초3"
-    },
-    {
-        "id": 37,
-        "class": "칼리스토 B",
-        "name": "정세진",
-        "school": "샘모루초",
-        "grade": "초5"
-    },
-    {
-        "id": 38,
-        "class": "칼리스토 C",
-        "name": "구도윤",
-        "school": "샘모루초",
-        "grade": "초5"
-    },
-    {
-        "id": 39,
-        "class": "칼리스토 C",
-        "name": "신시현",
-        "school": "안양동초",
-        "grade": "초5"
-    },
-    {
-        "id": 70,
-        "class": "칼리스토 C",
-        "name": "최유",
-        "school": "",
-        "grade": ""
-    },
-    {
-        "id": 40,
-        "class": "칼리스토 C",
-        "name": "조은서",
-        "school": "샘모루초",
-        "grade": "초4"
-    },
-    {
-        "id": 42,
-        "class": "크레센트 A",
-        "name": "구하나",
-        "school": "",
-        "grade": ""
-    },
-    {
-        "id": 48,
-        "class": "크레센트 A",
-        "name": "김보겸",
-        "school": "중앙초",
-        "grade": "초3"
-    },
-    {
-        "id": 43,
-        "class": "크레센트 A",
-        "name": "김시원",
-        "school": "비산초",
-        "grade": "초1"
-    },
-    {
-        "id": 44,
-        "class": "크레센트 A",
-        "name": "김은유",
-        "school": "",
-        "grade": "초3"
-    },
-    {
-        "id": 50,
-        "class": "크레센트 A",
-        "name": "문아늘",
-        "school": "안양초",
-        "grade": "초2"
-    },
-    {
-        "id": 45,
-        "class": "크레센트 A",
-        "name": "백서준",
-        "school": "샘모루초",
-        "grade": "초4"
-    },
-    {
-        "id": 47,
-        "class": "크레센트 A",
-        "name": "전제이",
-        "school": "안양동초",
-        "grade": "초3"
-    },
-    {
-        "id": 57,
-        "class": "크레센트 A",
-        "name": "최준명",
-        "school": "안양동초",
-        "grade": "초4"
-    },
-    {
-        "id": 8,
-        "class": "크레센트 B",
-        "name": "김리안",
-        "school": "중앙초",
-        "grade": "초2"
-    },
-    {
-        "id": 10,
-        "class": "크레센트 B",
-        "name": "양지후",
-        "school": "중앙초",
-        "grade": "초2"
-    },
-    {
-        "id": 11,
-        "class": "크레센트 B",
-        "name": "이지한",
-        "school": "샘모루초",
-        "grade": "초3"
-    },
-    {
-        "id": 12,
-        "class": "크레센트 B",
-        "name": "이지훈",
-        "school": "샘모루초",
-        "grade": "초3"
-    },
-    {
-        "id": 13,
-        "class": "크레센트 B",
-        "name": "정채린",
-        "school": "중앙초",
-        "grade": "초2"
-    },
-    {
-        "id": 71,
-        "class": "크레센트 B",
-        "name": "이시원",
-        "school": "안양초",
-        "grade": "초5"
-    },
-    {
-        "id": 72,
-        "class": "크레센트 C",
-        "name": "문가온",
-        "school": "",
-        "grade": ""
-    },
-    {
-        "id": 52,
-        "class": "크레센트 C",
-        "name": "박유주",
-        "school": "중앙초",
-        "grade": "초2"
-    },
-    {
-        "id": 53,
-        "class": "크레센트 C",
-        "name": "서여율",
-        "school": "",
-        "grade": "초3"
-    },
-    {
-        "id": 55,
-        "class": "크레센트 C",
-        "name": "양승유",
-        "school": "샘모루초",
-        "grade": "초1"
-    },
-    {
-        "id": 56,
-        "class": "크레센트 C",
-        "name": "이승준",
-        "school": "샘모루초",
-        "grade": "초2"
-    },
-    {
-        "id": 73,
-        "class": "타이탄 A",
-        "name": "정유민",
-        "school": "",
-        "grade": ""
-    },
-    {
-        "id": 59,
-        "class": "타이탄 A",
-        "name": "김정민",
-        "school": "임곱중",
-        "grade": "중1"
-    },
-    {
-        "id": 16,
-        "class": "타이탄 A",
-        "name": "신민경",
-        "school": "덕천초",
-        "grade": "초6"
-    },
-    {
-        "id": 60,
-        "class": "타이탄 A",
-        "name": "전설우",
-        "school": "임곱중",
-        "grade": "중1"
-    },
-    {
-        "id": 61,
-        "class": "타이탄 B",
-        "name": "강현우",
-        "school": "비산중",
-        "grade": "중1"
-    },
-    {
-        "id": 62,
-        "class": "타이탄 B",
-        "name": "경서현",
-        "school": "임곡중",
-        "grade": "중1"
-    },
-    {
-        "id": 63,
-        "class": "타이탄 B",
-        "name": "박가온",
-        "school": "부흥중",
-        "grade": "중1"
-    },
-    {
-        "id": 64,
-        "class": "타이탄 B",
-        "name": "오서한",
-        "school": "부흥중",
-        "grade": "중1"
-    },
-    {
-        "id": 66,
-        "class": "타이탄 B",
-        "name": "정혜원",
-        "school": "임곡중",
-        "grade": "중1"
-    },
-    {
-        "id": 67,
-        "class": "타이탄 B",
-        "name": "조하람",
-        "school": "임곡중",
-        "grade": "중1"
-    },
-    {
-        "id": 69,
-        "class": "타이탄 B",
-        "name": "최서준",
-        "school": "",
-        "grade": ""
-    }
-]
-;
-
+        // initializeData is now redundant for studentsData as it is set in constructor,
+        // but we keep it if there's other initialization logic needed.
+        // For now, we just ensure studentsData is set if it wasn't already (which it is).
+        if (!this.studentsData || this.studentsData.length === 0) {
+             // Fallback or re-initialization if needed
+        }
+        
         // 현재 날짜 설정
         this.currentDate = this.getCurrentDate();
 
@@ -996,6 +592,37 @@ class DataManager {
 
     loadFromStorage() {
         try {
+            const savedHomeworkData = localStorage.getItem('homeworkData');
+            if (savedHomeworkData) {
+                this.homeworkData = JSON.parse(savedHomeworkData);
+            }
+
+            const savedProgressData = localStorage.getItem('studentProgress');
+            if (savedProgressData) {
+                this.studentProgress = JSON.parse(savedProgressData);
+            }
+
+            // FORCE RESET: Explicitly remove old student data from storage to enforce the new strict list
+            localStorage.removeItem('studentsData');
+
+        } catch (error) {
+            console.error('데이터 로드 실패:', error);
+        }
+    }
+
+    exportBackupData() {
+        return {
+            studentsData: this.studentsData,
+            homeworkData: this.homeworkData,
+            studentProgress: this.studentProgress,
+            exportDate: new Date().toISOString()
+        };
+    }
+
+    importBackupData(backupData) {
+        if (!backupData.studentsData || !backupData.homeworkData || !backupData.studentProgress) {
+            throw new Error('잘못된 백업 데이터입니다.');
+        }
 
         this.studentsData = backupData.studentsData;
         this.homeworkData = backupData.homeworkData;
