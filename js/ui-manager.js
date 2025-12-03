@@ -207,8 +207,7 @@ class UIManager {
     }
 
     createSpecialClassCardContent(student, homework, progress) {
-        const phonicsSection = student.class !== '타이탄 B' ? 
-            this.createHomeworkItem('소리', 'phonics', student.id, homework.phonics, 'select', this.dataManager.getPhonicsOptions()) : '';
+        const phonicsSection = this.createPhonicsHomeworkItem(student, homework);
 
         return `
             <div class="student-info">
@@ -248,7 +247,7 @@ class UIManager {
 
             <div class="homework-section">
                 ${this.createHomeworkItem('어휘 (입체어휘 4000)', 'vocabulary', student.id, homework.vocabulary, 'select', this.dataManager.getVocabularyOptions())}
-                ${this.createHomeworkItem('소리훈련', 'phonics', student.id, homework.phonics, 'select', this.dataManager.getPhonicsOptions())}
+                ${this.createPhonicsHomeworkItem(student, homework)}
                 ${this.createHomeworkItem('독서/원서', 'reading', student.id, homework.reading, 'input')}
                 ${this.createHomeworkItem('기타', 'other', student.id, homework.other, 'input')}
                 ${this.createHomeworkItem('문법', 'grammar', student.id, homework.grammar, 'input')}
@@ -258,6 +257,32 @@ class UIManager {
             ${this.createEvaluationSection(student.id, homework)}
             ${this.createFeedbackSection(student.id, homework)}
             ${this.createActionButtons(student.id, homework)}
+        `;
+    }
+
+    createPhonicsHomeworkItem(student, homework) {
+        if (student.class === '타이탄 B') {
+            return '';
+        }
+
+        const options = this.dataManager.getPhonicsOptions();
+        const optionsHtml = options.map(option => {
+            const optValue = typeof option === 'object' ? option.value : option;
+            const optText = typeof option === 'object' ? option.text : option;
+            return `<option value="${optValue}" ${homework.phonics === optValue ? 'selected' : ''}>${optText}</option>`;
+        }).join('');
+
+        return `
+            <div class="homework-item">
+                <div class="homework-label">소리훈련</div>
+                <select class="homework-select" onchange="dataManager.updateHomework(${student.id}, 'phonics', this.value)">
+                    <option value="">선택하세요</option>
+                    ${optionsHtml}
+                </select>
+                <input type="text" class="homework-input" value="${homework.phonicsProgress || ''}"
+                       onchange="dataManager.updateHomework(${student.id}, 'phonicsProgress', this.value)"
+                       placeholder="다음 진도 / 추가 내용을 입력하세요">
+            </div>
         `;
     }
 
@@ -453,12 +478,14 @@ class UIManager {
         if (isSpecialClass) {
             if (homework.vocabularyTest) text += `📝 어휘시험: ${homework.vocabularyTest}\n`;
             if (homework.phonics) text += `🔤 소리: ${homework.phonics}\n`;
+            if (homework.phonicsProgress) text += `🔤 다음 진도: ${homework.phonicsProgress}\n`;
             if (homework.reading) text += `📚 원서수업: ${homework.reading}\n`;
             if (homework.grammar) text += `📖 문법: ${homework.grammar}\n`;
             if (homework.quizletEnabled && homework.quizletUrl) text += `🎯 퀴즐릿: ${homework.quizletUrl}\n`;
         } else {
             if (homework.vocabulary) text += `📝 어휘: ${this.dataManager.formatVocabularyText(homework.vocabulary)}\n`;
             if (homework.phonics) text += `🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics)}\n`;
+            if (homework.phonicsProgress) text += `🔤 다음 진도: ${homework.phonicsProgress}\n`;
             if (homework.reading) text += `📚 독서: ${homework.reading}\n`;
             if (homework.other) text += `📋 기타: ${homework.other}\n`;
             if (homework.grammar) text += `📖 문법: ${homework.grammar}\n`;

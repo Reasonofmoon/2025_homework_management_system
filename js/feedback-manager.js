@@ -126,6 +126,9 @@ class FeedbackManager {
         if (homework.phonics) {
             const phonicsText = this.dataManager.formatPhonicsText(homework.phonics) || homework.phonics;
             feedback += `• 소리 훈련: ${phonicsText}\n`;
+            if (homework.phonicsProgress) {
+                feedback += `  → 다음 진도: ${homework.phonicsProgress}\n`;
+            }
         }
 
         if (homework.reading) {

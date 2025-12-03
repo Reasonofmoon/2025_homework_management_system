@@ -93,9 +93,6 @@ class Utilities {
             lines.push(`   📝 어휘시험: ${homework.vocabularyTest || '없음'}`);
             if (hasPhonicsField) {
                 lines.push(`   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}`);
-                if (homework.phonicsProgress) {
-                    lines.push(`   🔤 다음진도: ${homework.phonicsProgress}`);
-                }
             }
             lines.push(`   📚 원서수업: ${homework.reading || '없음'}`);
             lines.push(`   📖 문법: ${homework.grammar || '없음'}`);
@@ -105,6 +102,10 @@ class Utilities {
             lines.push(`   📚 독서: ${homework.reading || '없음'}`);
             lines.push(`   📖 문법: ${homework.grammar || '없음'}`);
             lines.push(`   📋 기타: ${homework.other || '없음'}`);
+        }
+
+        if (homework.phonicsProgress) {
+            lines.push(`   🔤 다음진도: ${homework.phonicsProgress}`);
         }
 
         const quizletStatus = homework.quizletEnabled ? '활성화' : '비활성화';
