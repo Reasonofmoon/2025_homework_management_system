@@ -58,54 +58,111 @@ class Utilities {
         this.uiManager.showNotification('숙제 데이터가 내보내졌습니다!', 'success');
     }
 
+    getFilteredClassNames(classData) {
+        const classFilter = document.getElementById('class-filter');
+        const selectedClass = classFilter ? classFilter.value : 'all';
+
+        if (selectedClass === 'all') {
+            return Object.keys(classData);
+        }
+
+        return classData[selectedClass] ? [selectedClass] : [];
+    }
+
+    isSpecialClass(className) {
+        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
+        return specialClasses.includes(className);
+    }
+
+    buildStudentHomeworkText(student, homework, className, index) {
+        const isSpecialClass = this.isSpecialClass(className);
+        const hasPhonicsField = !(className === '타이탄 B');
+        const lines = [];
+        const schoolGrade = [student.school, student.grade].filter(Boolean).join(' ').trim();
+        const studentLabel = schoolGrade ? `${student.name} (${schoolGrade})` : student.name;
+        lines.push(`${index + 1}. ${studentLabel}`);
+
+        if (!isSpecialClass) {
+            const progress = this.dataManager.getStudentProgress(student.id);
+            if (progress?.vocabulary) {
+                lines.push(`   📈 진도: Unit ${progress.vocabulary.currentUnit} - ${progress.vocabulary.currentStage}차`);
+            }
+        }
+
+        if (isSpecialClass) {
+            lines.push(`   📝 어휘시험: ${homework.vocabularyTest || '없음'}`);
+            if (hasPhonicsField) {
+                lines.push(`   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}`);
+                if (homework.phonicsProgress) {
+                    lines.push(`   🔤 다음진도: ${homework.phonicsProgress}`);
+                }
+            }
+            lines.push(`   📚 원서수업: ${homework.reading || '없음'}`);
+            lines.push(`   📖 문법: ${homework.grammar || '없음'}`);
+        } else {
+            lines.push(`   📝 어휘: ${this.dataManager.formatVocabularyText(homework.vocabulary) || '없음'}`);
+            lines.push(`   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}`);
+            lines.push(`   📚 독서: ${homework.reading || '없음'}`);
+            lines.push(`   📖 문법: ${homework.grammar || '없음'}`);
+            lines.push(`   📋 기타: ${homework.other || '없음'}`);
+        }
+
+        const quizletStatus = homework.quizletEnabled ? '활성화' : '비활성화';
+        const quizletLine = homework.quizletUrl ? `${quizletStatus} - ${homework.quizletUrl}` : quizletStatus;
+        lines.push(`   🎯 퀴즐릿: ${quizletLine}`);
+
+        const evaluationParts = [
+            `📝 어휘합격 ${homework.vocabularyPass ? '✅' : '❌'}`,
+            `🔤 소리훈련 ${homework.phonicsPass ? '✅' : '❌'}`,
+            `🎯 퀴즐릿 ${homework.quizletPass ? '✅' : '❌'}`,
+            `📖 문법숙제 ${homework.grammarComplete ? '✅' : '❌'}`
+        ];
+        lines.push(`   📊 평가: ${evaluationParts.join(' / ')}`);
+
+        if (homework.feedback) {
+            lines.push(`   💬 피드백: ${homework.feedback}`);
+        }
+
+        return lines.join('\n');
+    }
+
+    buildClassHomeworkText(className, students) {
+        let classHomeworkText = `=== ${className} (${students.length}명) ===\n`;
+
+        students.forEach((student, index) => {
+            const homework = this.dataManager.getHomeworkForStudent(student.id);
+            classHomeworkText += this.buildStudentHomeworkText(student, homework, className, index);
+            classHomeworkText += '\n\n';
+        });
+
+        return classHomeworkText;
+    }
+
     // 반별 숙제 복사
     exportClassHomework() {
         const classData = this.dataManager.getClassData();
-        let allHomeworkText = `📚 전체 반 숙제 내역 - ${this.dataManager.currentDate}\n\n`;
+        const targetClasses = this.getFilteredClassNames(classData);
 
-        Object.keys(classData).forEach((className, classIndex) => {
+        if (targetClasses.length === 0) {
+            this.uiManager.showNotification('복사할 반을 찾을 수 없습니다.', 'error');
+            return;
+        }
+
+        const isAllSelected = targetClasses.length === Object.keys(classData).length;
+        const headerLabel = isAllSelected ? '전체 반' : targetClasses.join(', ');
+        let allHomeworkText = `📚 ${headerLabel} 숙제 내역 - ${this.dataManager.currentDate}\n\n`;
+
+        targetClasses.forEach(className => {
             const students = classData[className];
-            const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
-            const isSpecialClass = specialClasses.includes(className);
-
-            allHomeworkText += `=== ${className} (${students.length}명) ===\n`;
-
-            students.forEach((student, index) => {
-                const homework = this.dataManager.getHomeworkForStudent(student.id);
-
-                allHomeworkText += `${index + 1}. ${student.name} (${student.school} ${student.grade})\n`;
-
-                if (isSpecialClass) {
-                    allHomeworkText += `   📝 어휘시험: ${homework.vocabularyTest || '없음'}\n`;
-                    allHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
-                    if (homework.phonicsProgress) {
-                        allHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
-                    }
-                    allHomeworkText += `   📚 원서수업: ${homework.reading || '없음'}\n`;
-                    if (homework.quizletEnabled && homework.quizletUrl) {
-                        allHomeworkText += `   🎯 퀴즐릿: ${homework.quizletUrl}\n`;
-                    }
-                    allHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
-                    allHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
-                } else {
-                    allHomeworkText += `   📝 어휘: ${this.dataManager.formatVocabularyText(homework.vocabulary) || '없음'}\n`;
-                    allHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
-                    allHomeworkText += `   📚 독서: ${homework.reading || '없음'}\n`;
-                    allHomeworkText += `   📋 기타: ${homework.other || '없음'}\n`;
-                }
-
-                if (homework.feedback) {
-                    allHomeworkText += `   💬 피드백: ${homework.feedback}\n`;
-                }
-
-                allHomeworkText += '\n';
-            });
-
-            allHomeworkText += '\n';
+            if (!students) return;
+            allHomeworkText += this.buildClassHomeworkText(className, students);
         });
 
         navigator.clipboard.writeText(allHomeworkText).then(() => {
-            this.uiManager.showNotification('전체 반 숙제가 클립보드에 복사되었습니다!', 'success');
+            const message = targetClasses.length === 1
+                ? `${targetClasses[0]}반 숙제가 클립보드에 복사되었습니다!`
+                : '숙제가 클립보드에 복사되었습니다!';
+            this.uiManager.showNotification(message, 'success');
         }).catch(err => {
             console.error('복사 실패:', err);
             this.uiManager.showNotification('복사에 실패했습니다.', 'error');
@@ -148,41 +205,8 @@ class Utilities {
         }
 
         const studentsInClass = this.dataManager.studentsData.filter(student => student.class === selectedClass);
-        const specialClasses = ['가니메데', '유로파 A', '유로파 B', '타이탄 A', '타이탄 B'];
-        const isSpecialClass = specialClasses.includes(selectedClass);
-
         let classHomeworkText = `📚 ${selectedClass} 숙제 내역 - ${this.dataManager.currentDate}\n\n`;
-
-        studentsInClass.forEach((student, index) => {
-            const homework = this.dataManager.getHomeworkForStudent(student.id);
-
-            classHomeworkText += `${index + 1}. ${student.name} (${student.school} ${student.grade})\n`;
-
-            if (isSpecialClass) {
-                classHomeworkText += `   📝 어휘시험: ${homework.vocabularyTest || '없음'}\n`;
-                classHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
-                if (homework.phonicsProgress) {
-                    classHomeworkText += `   🔤 다음진도: ${homework.phonicsProgress}\n`;
-                }
-                classHomeworkText += `   📚 원서수업: ${homework.reading || '없음'}\n`;
-                if (homework.quizletEnabled && homework.quizletUrl) {
-                    classHomeworkText += `   🎯 퀴즐릿: ${homework.quizletUrl}\n`;
-                }
-                classHomeworkText += `   📖 문법: ${homework.grammar || '없음'}\n`;
-                classHomeworkText += `   📊 문법숙제: ${homework.grammarComplete ? '✅ 완료' : '❌ 미완료'}\n`;
-            } else {
-                classHomeworkText += `   📝 어휘: ${this.dataManager.formatVocabularyText(homework.vocabulary) || '없음'}\n`;
-                classHomeworkText += `   🔤 소리: ${this.dataManager.formatPhonicsText(homework.phonics) || '없음'}\n`;
-                classHomeworkText += `   📚 독서: ${homework.reading || '없음'}\n`;
-                classHomeworkText += `   📋 기타: ${homework.other || '없음'}\n`;
-            }
-
-            if (homework.feedback) {
-                classHomeworkText += `   💬 피드백: ${homework.feedback}\n`;
-            }
-
-            classHomeworkText += '\n';
-        });
+        classHomeworkText += this.buildClassHomeworkText(selectedClass, studentsInClass);
 
         navigator.clipboard.writeText(classHomeworkText).then(() => {
             this.uiManager.showNotification(`${selectedClass}반 숙제가 클립보드에 복사되었습니다!`, 'success');
