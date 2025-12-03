@@ -221,8 +221,8 @@ class UIManager {
             <div class="homework-section">
                 ${this.createHomeworkItem('어휘시험', 'vocabularyTest', student.id, homework.vocabularyTest, 'input')}
                 ${phonicsSection}
-                ${this.createHomeworkItem('원서수업', 'reading', student.id, homework.reading, 'input')}
-                ${this.createHomeworkItem('문법', 'grammar', student.id, homework.grammar, 'input')}
+                ${this.createHomeworkItem('원서수업', 'reading', student.id, homework.reading, 'input', [], true)}
+                ${this.createHomeworkItem('문법', 'grammar', student.id, homework.grammar, 'input', [], true)}
                 ${this.createQuizletSection(student.id, homework)}
             </div>
 
@@ -248,9 +248,9 @@ class UIManager {
             <div class="homework-section">
                 ${this.createHomeworkItem('어휘 (입체어휘 4000)', 'vocabulary', student.id, homework.vocabulary, 'select', this.dataManager.getVocabularyOptions())}
                 ${this.createPhonicsHomeworkItem(student, homework)}
-                ${this.createHomeworkItem('독서/원서', 'reading', student.id, homework.reading, 'input')}
+                ${this.createHomeworkItem('독서/원서', 'reading', student.id, homework.reading, 'input', [], true)}
                 ${this.createHomeworkItem('기타', 'other', student.id, homework.other, 'input')}
-                ${this.createHomeworkItem('문법', 'grammar', student.id, homework.grammar, 'input')}
+                ${this.createHomeworkItem('문법', 'grammar', student.id, homework.grammar, 'input', [], true)}
                 ${this.createQuizletSection(student.id, homework)}
             </div>
 
@@ -286,7 +286,7 @@ class UIManager {
         `;
     }
 
-    createHomeworkItem(label, field, studentId, value, type, options = []) {
+    createHomeworkItem(label, field, studentId, value, type, options = [], propagateToClass = false) {
         if (type === 'select') {
             const optionsHtml = options.map(option => {
                 const optValue = typeof option === 'object' ? option.value : option;
@@ -297,7 +297,7 @@ class UIManager {
             return `
                 <div class="homework-item">
                     <div class="homework-label">${label}</div>
-                    <select class="homework-select" onchange="dataManager.updateHomework(${studentId}, '${field}', this.value)">
+                    <select class="homework-select" onchange="${propagateToClass ? `uiManager.updateHomeworkWithClassSync(${studentId}, '${field}', this.value, '${label}')` : `dataManager.updateHomework(${studentId}, '${field}', this.value)`}">
                         <option value="">선택하세요</option>
                         ${optionsHtml}
                     </select>
@@ -308,10 +308,31 @@ class UIManager {
                 <div class="homework-item">
                     <div class="homework-label">${label}</div>
                     <input type="text" class="homework-input" value="${value || ''}"
-                           onchange="dataManager.updateHomework(${studentId}, '${field}', this.value)"
+                           onchange="${propagateToClass ? `uiManager.updateHomeworkWithClassSync(${studentId}, '${field}', this.value, '${label}')` : `dataManager.updateHomework(${studentId}, '${field}', this.value)`}"
                            placeholder="${label} 내용을 입력하세요">
                 </div>
             `;
+        }
+    }
+
+    updateHomeworkWithClassSync(studentId, field, value, label = '') {
+        const student = this.dataManager.studentsData.find(s => s.id === studentId);
+        if (!student) return;
+
+        const classFilterElement = document.getElementById('class-filter');
+        const selectedClass = classFilterElement ? classFilterElement.value : 'all';
+        const shouldPropagate = selectedClass && selectedClass !== 'all' && selectedClass === student.class;
+
+        if (shouldPropagate) {
+            const classmates = this.dataManager.studentsData.filter(s => s.class === selectedClass);
+            classmates.forEach(s => this.dataManager.updateHomework(s.id, field, value));
+            this.renderStudents(selectedClass);
+
+            if (label) {
+                this.showNotification(`${selectedClass}반 전체에 ${label}을 적용했습니다.`, 'success');
+            }
+        } else {
+            this.dataManager.updateHomework(studentId, field, value);
         }
     }
 
